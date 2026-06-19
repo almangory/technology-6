@@ -1577,7 +1577,7 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
             {/* Header Frame of Sudan ICT Worksheet */}
             <div className="border-[2px] border-black p-3 rounded-xl flex flex-col gap-2 shrink-0">
               <div className="flex justify-between items-center text-[10px] font-bold border-b border-dashed border-slate-400 pb-1.5">
-                <span>الشاعـر في تكنولوجيا المعلومات</span>
+                <span>نقلة في تكنولوجيا المعلومات</span>
                 <span className="text-xs px-3 py-0.5 border border-black rounded-full font-black">تلاميذ الشهادة الابتدائية</span>
                 <span>جمهورية السودان • وزارة التربية</span>
               </div>
