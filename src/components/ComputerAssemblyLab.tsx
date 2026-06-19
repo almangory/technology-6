@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Cpu, 
@@ -457,6 +457,17 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
   // Lab Tab states: 'assembly' | 'booting' | 'os_menu' | 'dos' | 'windows' | 'linux'
   const [labState, setLabState] = useState<'assembly' | 'booting' | 'os_menu' | 'dos' | 'windows' | 'linux'>('assembly');
+
+  // Dynamic Mobile Detection to disable touch-blocking drag and layout lockups on smaller viewports
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Hardcoded initial motherboard parts matching the curriculum requirements exactly
   const [parts, setParts] = useState<ComponentPart[]>([
@@ -1824,7 +1835,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                     {parts.map((p) => (
                       <motion.div
                         key={p.id}
-                        drag={!p.placed}
+                        drag={!isMobile && !p.placed}
                         dragSnapToOrigin={true}
                         dragElastic={0.08}
                         dragMomentum={false}
@@ -1884,7 +1895,9 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           borderColor: '#22d3ee',
                           boxShadow: "0px 10px 25px rgba(34, 211, 238, 0.4)" 
                         }}
-                        className={`p-3 rounded-2xl border transition duration-150 transform active:scale-98 flex items-center justify-between gap-2.5 cursor-pointer touch-none select-none ${
+                        className={`p-3 rounded-2xl border transition duration-150 transform active:scale-98 flex items-center justify-between gap-2.5 cursor-pointer ${
+                          isMobile ? 'select-none' : 'touch-none select-none'
+                        } ${
                           p.placed 
                             ? 'bg-slate-950 border-indigo-900/30 text-indigo-400/60 opacity-55' 
                             : beginnerMode && p.id === nextRequiredPartId
@@ -1893,7 +1906,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             ? 'bg-indigo-650/30 text-white border-cyan-400 ring-1 ring-cyan-400'
                             : 'bg-slate-900/70 hover:bg-slate-800 border-indigo-500/10 text-slate-200'
                         }`}
-                        style={{ touchAction: 'none' }}
+                        style={isMobile ? undefined : { touchAction: 'none' }}
                       >
                         {/* Real-life vector thumbnail preview */}
                         <div className="w-10 h-10 bg-slate-950 p-1.5 rounded-xl border border-indigo-500/10 shrink-0">
