@@ -15,7 +15,8 @@ import { UserProfileCard } from './components/UserProfileCard';
 import { InteractiveTools } from './components/InteractiveTools';
 import { GoogleWorkspaceHub } from './components/GoogleWorkspaceHub';
 import { ComputerAssemblyLab } from './components/ComputerAssemblyLab';
-import { BookOpen, Trophy, Sparkles, Award, Star, ListCollapse, Home, ShieldAlert, Laptop, ChevronLeft, Cpu } from 'lucide-react';
+import { WorksheetGenerator } from './components/WorksheetGenerator';
+import { BookOpen, Trophy, Sparkles, Award, Star, ListCollapse, Home, ShieldAlert, Laptop, ChevronLeft, Cpu, FileText } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'ict_sixth_grade_stats_v3';
 
@@ -33,7 +34,7 @@ const DEFAULT_STATS: UserStats = {
 
 export default function App() {
   // Navigation & Active items state
-  const [currentView, setCurrentView] = useState<'lobby' | 'map' | 'lesson' | 'exam' | 'profile' | 'google' | 'assembly_lab'>('lobby');
+  const [currentView, setCurrentView] = useState<'lobby' | 'map' | 'lesson' | 'exam' | 'profile' | 'google' | 'assembly_lab' | 'worksheets'>('lobby');
   const [activeUnit, setActiveUnit] = useState<Unit | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeSimulator, setActiveSimulator] = useState<SimulatorType | null>(null);
@@ -247,6 +248,15 @@ export default function App() {
               <span>معمل الحاسوب 💻</span>
             </button>
             <button
+              onClick={() => setCurrentView('worksheets')}
+              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                currentView === 'worksheets' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+              }`}
+            >
+              <FileText className="w-4 h-4 animate-pulse text-indigo-400" />
+              <span>أوراق العمل 📝</span>
+            </button>
+            <button
               onClick={() => setCurrentView('profile')}
               className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
                 currentView === 'profile' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
@@ -416,6 +426,23 @@ export default function App() {
               />
             </motion.div>
           )}
+
+          {currentView === 'worksheets' && (
+            <motion.div
+              key="worksheets"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <WorksheetGenerator
+                stats={stats}
+                onEmitPoints={handleEmitPoints}
+                onEmitAchievement={handleEmitAchievement}
+                onClose={() => setCurrentView('lobby')}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -455,6 +482,13 @@ export default function App() {
         >
           <Cpu className="w-5 h-5" />
           <span>العتاد 🛠️</span>
+        </button>
+        <button
+          onClick={() => setCurrentView('worksheets')}
+          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'worksheets' ? 'text-cyan-400' : 'text-indigo-300'}`}
+        >
+          <FileText className="w-5 h-5" />
+          <span>أوراق العمل 📝</span>
         </button>
         <button
           onClick={() => setCurrentView('profile')}

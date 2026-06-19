@@ -1108,5 +1108,12 @@ export const ACHIEVEMENTS_DATA: Achievement[] = [
     description: 'قمت بربط حساب Google بنجاح ومزامنة وثائق المذاكرة والشهادات مع Google Drive وClassroom.',
     icon: 'Cloud',
     unlocked: false
+  },
+  {
+    id: 'ach-8',
+    title: 'معـلّم الأجيـال المبدع 📝',
+    description: 'قمت بإنشاء وتصميم أوراق عمل دراسية مخصصة كاملة جاهزة للطباعة والتحفيظ.',
+    icon: 'Printer',
+    unlocked: false
   }
 ];
