@@ -14,7 +14,11 @@ import {
   fetchTasks,
   createGoogleTask,
   toggleTaskComplete,
-  fetchGoogleFormBody
+  fetchGoogleFormBody,
+  createClassroomCourse,
+  createClassroomTopic,
+  createClassroomMaterial,
+  createClassroomCourseWork
 } from '../lib/googleWorkspace';
 import {
   Trophy,
@@ -97,6 +101,13 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
   const [formIdInput, setFormIdInput] = useState<string>('1FAIpQLSfD_K_7h3uY-3YpYCHgY6g7wY-5G_b5gX-uU'); // sample educational id
   const [formBody, setFormBody] = useState<any | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // --- Google Classroom Automated Curriculum Sync States ---
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncProgress, setSyncProgress] = useState<number>(0);
+  const [syncLogs, setSyncLogs] = useState<string[]>([]);
+  const [syncCurrentAction, setSyncCurrentAction] = useState<string>('');
+  const [syncSuccessCourseId, setSyncSuccessCourseId] = useState<string>('');
 
   // Audio tone cue helper
   const playSound = (soundType: 'success' | 'fail' | 'click') => {
@@ -209,6 +220,213 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
   };
 
   // Google Classroom API actions
+  const CURRICULUM_UNITS = [
+    {
+      name: "الوحدة الأولى: شبكات الحاسوب وأدوات الاتصال 🌐",
+      lessons: [
+        {
+          title: "الدرس الأول: مفهوم شبكة الحاسوب وأهميتها",
+          description: "مفهوم شبكة الحاسوب:\nهي عبارة عن اتصال جهازين أو أكثر معاً بواسطة كابلات أو موجات لاسلكية بغرض مشاركة الموارد والمعلومات والبرامج والطابعات.\n\nأهمية الشبكات للطلاب:\n1. مشاركة الملفات والمستندات بسرعة فائقة وعبر السحابة.\n2. مشاركة الأجهزة الملحقة مثل الطابعات والماسحات الضوئية لتقليل التكلفة المالية.\n3. توفير سرعة حوسبة عالية واتصالات سلسة بين المعلمين والتلاميذ بالمدرسة.\n\nصفحة المنهج: متطابق مع صفحة 12-15 من كتاب السادس الابتدائي السوداني."
+        },
+        {
+          title: "الدرس الثاني: أنواع الشبكات والربط المحلي والواسع",
+          description: "تصنف الشبكات بحسب المساحة الجغرافية إلى نوعين رئيسيين:\n\n1. الشبكة المحلية (LAN - Local Area Network):\nتغطي مساحة جغرافية صغيرة ومحدودة مثل معمل الحاسوب بالمدرسة أو المنزل أو مكتب صغير.\nتتميز بسرعة فائقة وأمان مرتفع للغاية.\n\n2. الشبكة الواسعة (WAN - Wide Area Network):\nتغطي مساحة جغرافية شاسعة جداً مثل المدن والدول والقارات، وأشهر مثال عليها هي شبكة الإنترنت العالمية.\nتربط آلاف الشبكات المحلية ببعضها البعض باستخدام الأقمار الصناعية والألياف الضوئية البحرية.\n\nصفحة المنهج: متطابق مع صفحة 16-19 من الكتاب المدرسي."
+        }
+      ],
+      assignment: {
+        title: "تمارين وتقييم الوحدة الأولى: شبكات الحاسوب 📝",
+        description: "الرجاء حل الأسئلة المنهجية المرفقة أدناه لتأكيد فهمك لمصطلحات ومفاهيم الشبكات المعتمدة في المنهج الدراسي:\n\nالسؤال الأول: اختر الإجابة الصحيحة:\n- الشبكة التي تُستخدم لربط أجهزة الحاسوب داخل مدرسة واحدة تسمى:\n  أ) LAN  |  ب) WAN  |   ج) PAN\n\nالسؤال الثاني: ضع علامة (صح) أو (خطأ):\n- ( ) شبكة الإنترنت العالمية تعتبر مثالاً كلاسيكياً للشبكة المحلية (LAN).\n\nالسؤال الثالث: أجب باختصار:\nإلى ماذا يرمز الاختصار WAN باللغة العربية والإنجليزية؟"
+      }
+    },
+    {
+      name: "الوحدة الثانية: الجرائم الإلكترونية وأمن المعلومات 🛡️",
+      lessons: [
+        {
+          title: "الدرس الأول: المخاط المخبرية والفيروسات وكيفية انتشارها",
+          description: "مخاطر العصر الرقمي:\nمع انتشار شبكة الإنترنت، برزت مخاطر أمنية عديدة تهدد سلامة أجهزتنا وملفاتنا الخاصة في السودان والعالم.\n\nفيروسات الحاسوب:\nهي برامج خبيثة تُصمم بهدف إلحاق الضرر بالأجهزة، وتعديل ملفات المستخدم، واستنزاف موارد الذاكرة والقرص الصلب.\n\nطرق انتشار الفيروسات:\n1. فتح روابط مجهولة أو تحميل برامج مشبوهة من غير مصادرها الرسمية.\n2. تبادل وسائط التخزين المصابة (مثل الفلاش ميموري USB) بين الأصدقاء.\n3. فتح رسائل البريد الإلكتروني العشوائية التي تحتوي على مرفقات ضارة.\n\nصفحة المنهج: صفحة 22-25 من كتاب تكنولوجيا سادس."
+        },
+        {
+          title: "الدرس الثاني: الجرائم الإلكترونية الشائعة وسلامة الهوية",
+          description: "الجريمة الإلكترونية:\nهي كل فعل غير قانوني يتم ارتكابه باستخدام أجهزة الحاسوب أو شبكة الإنترنت للوصول غير المصرح به لمعلومات سرية أو سرقتها.\n\nأشهر أنواع الجرائم الإلكترونية للطلاب:\n1. التصيد الاحتيالي (Phishing): انتحال صفقة بنك أو جهة تعليمية لسرقة الهوية أو كلمات المرور.\n2. انتحال الشخصيات (Impersonating): إنشاء حسابات مزيفة بأسماء أشخاص حقيقيين لتضليل أصدقائهم.\n3. القرصنة وسرقة الملكية الفكرية (Piracy): نسخ البرمجيات أو الكتب وبيعها دون إذن مؤلفيها.\n\nسبل حماية الهوية الرقمية:\n- لا تشارك كلمات مرورك مع أحد.\n- تأكد من هوية المتحدث وموثوقية الروابط التي تزورها.\n\nصفحة المنهج: صفحة 26-29."
+        }
+      ],
+      assignment: {
+        title: "تمارين وتقييم الوحدة الثانية: حماية البيانات وأمن السحابة 📝",
+        description: "حل الأسئلة التالية لاختبار مهارات الحماية الرقمية والوعي القانوني:\n\nالسؤال الأول: ما هو الفرق بين الفيروس البرمجي والملف الطبيعي؟\n\nالسؤال الثاني: اذكر ثلاثة تصرفات صحيحة وذكية لحماية حساباتك التعليمية من الاختراق والتصيد الاحتيالي.\n\nالسؤال الثالث: ضع علامة (صح) أو (خطأ):\n- ( ) يجب استخدام كلمة مرور بسيطة مثل (123456) ليسهل تذكرها لأمان حسابك."
+      }
+    },
+    {
+      name: "الوحدة الثالثة: تصميم العروض التقديمية 📊",
+      lessons: [
+        {
+          title: "الدرس الأول: مقدمة في برنامج PowerPoint وأساسيات الشرائح",
+          description: "برمجيات العروض التقديمية:\nتُستخدم لتقديم وعرض الأفكار والدروس بطرق بصرية مشوقة ومنظمة تعتمد على الشرائح (Slides).\n\nمكونات واجهة برنامج Microsoft PowerPoint:\n1. شريط القوائم والأدوات الرئيسي.\n2. ساحة تخطيط وتصميم الشرائح وتعديلها.\n3. نافذة تصفح وترتيب الشرائح الجانبية.\n\nالقواعد الذهبية لتصميم شريحة ناجحة:\n- التركيز على فكرة واحدة لكل شريحة.\n- تجنب نصوص القراءة الطويلة المشتتة للتلاميذ.\n\nصفحة المنهج: صفحة 32-35 من مقرر التكنولوجيا."
+        },
+        {
+          title: "الدرس الثاني: التنسيقات وإدراج العناصر الفنية والوسائط",
+          description: "لجعل عرضك التقديمي تكنولوجياً مشوقاً وسريع الجاذبية، يتيح لك البرنامج إدراج:\n\n1. الصور والأيقونات التوضيحية لتدعيم المعلومة.\n2. الجداول والمخططات الإحصائية الذكية لتلخيص الأرقام المنهجية.\n3. المقاطع الصوتية والمرئية القصيرة لإضافة حيوية تفاعلية.\n\nتنسيق الخطوط:\n- استخدام خطوط متناسقة وألوان متباينة مع الخلفية لضمان القراءة بوضوح من المسافات البعيدة بالصف الدراسي.\n\nصفحة المنهج: صفحة 36-39."
+        },
+        {
+          title: "الدرس الثالث: التأثيرات الانتقالية وحركة العناصر",
+          description: "الحركات الانتقالية (Transitions):\nهي مؤثرات حركية تظهر عند الانتقال من شريحة إلى أخرى أثناء عرض الدرس، مثل تلاشي (Fade) أو مسح (Wipe) أو دفع الشريحة.\n\nحركات العناصر (Animations):\nهي حركات خاصة تُطبق على النصوص أو الصور داخل الشريحة الواحدة للتحكم في ظهورها ودخولها، مثل التحليق للداخل أو الدوران.\n\nأهمية الحركات:\n- تجذب انتباه الأطفال والزملاء أثناء إلقاء المشروع.\n- تنظم تتابع عرض النقاط تدريجياً لسهولة الاستيعاب.\n\nصفحة المنهج: صفحة 40-42 من كتاب التكنولوجيا."
+        }
+      ],
+      assignment: {
+        title: "تمارين وتقييم الوحدة الثالثة: تصميم عرض تفاعلي 📝",
+        description: "التقويم العملي لتصميم العروض المنهجية:\n\nالسؤال الأول: ما هو الفرق بين الحركات الانتقالية (Transitions) وحركات العناصر (Animations)؟\n\nالسؤال الثاني: اشرح باختصار لماذا نفضل عدم كتابة فقرات طويلة تفصيلية داخل شريحة العرض التقديمي للتلاميذ الباحثين؟\n\nالسؤال الثالث: اذكر ثلاث إضافات فنية يمكن إدراجها لإثراء المحتوى الصوتي والبصري للدرس."
+      }
+    },
+    {
+      name: "الوحدة الرابعة: البرمجيات وقواعد البيانات المنهجية 🗄️",
+      lessons: [
+        {
+          title: "الدرس الأول: برامج التشغيل والبرمجيات التطبيقية",
+          description: "تنقسم برمجيات الحاسوب إلى فئتين رئيسيتين:\n\n1. برمجيات النظام (System Software):\nالبرامج الأساسية لتشغيل الحاسوب، والتحكم بالملحقات وإدارة الذاكرة.\nأهم مثال: نظام التشغيل (Operating System) كويندوز (Windows) ولينكس (Linux).\n\n2. البرمجيات التطبيقية (Application Software):\nهي البرامج التي يثبتها المستخدم لأداء مهام محددة تلبي رغباته اليومية.\nأمثلة: متقارب الإنترنت، برامج التلوين والرسم، برامج تحرير ومعالجة النصوص.\n\nصفحة المنهج: صفحة 45-48."
+        },
+        {
+          title: "الدرس الثاني: قواعد البيانات وتخزين المعلومات المنظم",
+          description: "تعريف قاعدة البيانات (Database):\nهي مستودع رقمي منظم لتخزين كميات ضخمة من المعلومات المترابطة، يسهل الوصول إليها وتعديلها والبحث فيها وتحديثها بسرعة وسهولة فائقة.\n\nمكونات جدول قاعدة البيانات:\n1. الحقول (Fields / Columns): الأعمدة التي تحدد نوع المعلومة المخزنة (مثل اسم الطالب، رقم الهاتف، الفصل الدراسي).\n2. السجلات (Records / Rows): الصفوف التي تمثل بيانات شخص أو معاملة كاملة واحدة (مثل بيانات الطالب أحمد بالكامل).\n\nأمثلة من الواقع الملموس:\n- دليل الهاتف في الجوال.\n- نظام سجلات ودرجات الطلاب الإداري بوزارة التعليم السودانية.\n\nصفحة المنهج: صفحة 49-52."
+        },
+        {
+          title: "الدرس الثالث: لغة الاستعلامات وأدوات تصفية البيانات",
+          description: "الاستعلام (Query):\nهو طلب استرجاع أو جلب معلومات محددة من قاعدة البيانات تنطبق عليها شروط معينة.\n\nأهمية تصفية واستعلام البيانات بالمدارس:\n- تتيح لمدير المدرسة استخراج قائمة بأسماء تلاميذ الصف السادس الذين حصلوا على علامات متفوقة بضغطة زر واحدة.\n- الاستعلام عن غيابات وتفوق طالب معين بذكاء وتجنب البحث اليدوي في المجلدات الورقية القديمة.\n\nصفحة المنهج: صفحة 53-55 من كتاب التكنولوجيا والاتصالات سادس ابتدائي."
+        }
+      ],
+      assignment: {
+        title: "تمارين وتقييم الوحدة الرابعة: البرمجيات وقواعد البيانات الجاهزة 📝",
+        description: "اختبر مهارات البرمجة والبيانات لديك:\n\nالسؤال الأول: قارن بذكر مثال واحد لكل من برمجيات تشغيل النظام والتطبيقات العملية.\n\nالسؤال الثاني: ما هي الوحدة الأساسية التي تبنى داخلها أي قاعدة بيانات تكنولوجية؟\n\nالسؤال الثالث: أعطِ مثالاً واحداً من حياتك اليومية تظهر فيه فوائد قواعد البيانات والاستعلام الذكي الفوري."
+      }
+    },
+    {
+      name: "الوحدة الخامسة: الكمبيوتر وتطبيقات المستقبل حولنا 💻",
+      lessons: [
+        {
+          title: "الدرس الأول: المكونات المادية الداخلية فائقة السرعة",
+          description: "أجزاء الحاسوب الداخلية المسؤولة عن معالجة وإنجاز المهام:\n\n1. اللوحة الأم (Motherboard):\nهي لوحة الدوائر الإلكترونية الرئيسية التي تربط كافة أجزاء ومكونات الكمبيوتر وتضمن توافق وسريان البيانات بينها.\n\n2. وحدة المعالجة المركزية (CPU):\nالعقل المدبر للكمبيوتر؛ تنفذ التعليمات المبرمجة وتتحكم بكامل العمليات الحسابية والمنطقية والسرعة الفائقة.\n\n3. الذاكرة العشوائية (RAM):\nذاكرة قصيرة المدى تخزن البيانات النشطة قيد التحضير والتجهيز من المعالج لتسريع الاستجابة.\nتفقد محتوياتها بالكامل بمجرد انقطاع التيار الكهربائي.\n\n4. أقراص التخزين (HDD / SSD):\nوحدات التخزين الدائمة طويلة المدى لحفظ نظام التشغيل والبرامج والملفات بأمان تام دون الخوف من انقطاع الكهرباء.\n\nصفحة المنهج: صفحة 58-61."
+        },
+        {
+          title: "الدرس الثاني: دور تكنولوجيا المعلومات في تنمية المجتمع",
+          description: "تسهم التكنولوجيا والاتصالات في تسهيل مجالات الحياة بصورة حيوية:\n\n1. في قطاع التعليم المشرق:\nتسهيل التعلم السحابي عن بُعد، تبادل الواجبات مباشرة عبر منصات مثل Google Classroom، ومراجعة الفيديوهات المسجلة مجاناً.\n\n2. في قطاع الاتصالات والخدمات الحكومية:\nتوفير الخدمات البنكية والدفع الرقمي السريعين، وتطوير البوابات الخدمية وتلقي المساعدات.\n\n3. في قطاع الابتكار والتحول الرقمي:\nبناء مهارات لطلاب السودان المبدعين ليمثلوا ريادة حوسبية في صناعة التطبيقات وتطوير السحابة والتحول الرقمي المستقبلي المعتمد.\n\nصفحة المنهج: صفحة 62-65 من مقرر سادس."
+        }
+      ],
+      assignment: {
+        title: "تمارين وتقييم الوحدة الخامسة: أجزاء التقنية والمجتمع الرقمي 📝",
+        description: "المجموعة النهائية من أسئلة تقويم المنهج التكنولوجي:\n\nالسؤال الأول: صف الفرق الفني والعملي بين دور الذاكرة المؤقتة (RAM) ودور أقراص التخزين الثابتة (SSD).\n\nالسؤال الثاني: ما الذي يربط كافة الأجزاء والقطع الإلكترونية للكمبيوتر من الداخل؟\n\nالسؤال الثالث: اذكر ثلاثة فوائد رئيسية لاستخدام المنصات الرقمية السحابية في إثراء مهارات طلاب السودان بالصف السادس."
+      }
+    }
+  ];
+
+  const handleAutoSyncClassroom = async () => {
+    playSound('click');
+    const confirmed = window.confirm('هل تود البدء في معالج المزامنة المنهجية الذكي؟ سيقوم النظام بشكل آلي بالتحقق من فصولك، وإنشاء صف مادة تكنولوجيا المعلومات والاتصالات، وتقسيم المنهج لـ 5 وحدات رئيسية، مع رفع ملخصات الدروس والواجبات لحساب كلاس روم الحقيقي الخاص بك.');
+    if (!confirmed) return;
+
+    setIsSyncing(true);
+    setSyncProgress(2);
+    setSyncLogs([]);
+    setSyncCurrentAction('تنشيط محرك المزامنة ودراسة سجلات الحساب...');
+
+    const log = (msg: string) => {
+      setSyncLogs(prev => [...prev, `[${new Date().toLocaleTimeString('ar-SD')}] ${msg}`]);
+    };
+
+    try {
+      log('🚀 تشغيل معالج المزامنة الحسابية لـ Google Classroom لطلاب السودان بصف سادس ابتدائي.');
+      
+      // Step 1: Examine courses
+      log('🔍 جاري فحص الفصول الدراسية وتفحص الحساب...');
+      setSyncCurrentAction('البحث عن الفصل المنهجي...');
+      const existingClasses = await fetchClassroomCourses();
+      let targetCourse = existingClasses.find(
+        (c: any) => c.name.includes("مادة تكنولوجيا المعلومات") || c.name.includes("تكنولوجيا المعلومات والاتصالات")
+      );
+
+      let courseId = '';
+      if (targetCourse) {
+        courseId = targetCourse.id;
+        log(`✓ تم العثور على الفصل الدراسي قائم بالفعل باسم: "${targetCourse.name}" المعرف: ${courseId}`);
+      } else {
+        log('➕ لم يتم العثور على صف تكنولوجيا سادس ابتدائي. جاري إنشاء الفصل الدراسي الجديد الآن...');
+        setSyncCurrentAction('إنشاء فصل "مادة تكنولوجيا المعلومات والاتصالات - الصف السادس"...');
+        const newCourse = await createClassroomCourse({
+          name: "مادة تكنولوجيا المعلومات والاتصالات - الصف السادس",
+          section: "طبعة تكنولوجيا السودان - المبدعين الصغار",
+          descriptionHeading: "منصة التعليم التفاعلي المنهج السوداني",
+          description: "بوابة تفاعلية سحابية لمادة تكنولوجيا المعلومات والاتصالات لطلاب الصف السادس الابتدائي بالسودان. تحتوي على الدروس العملية، ملخصات مبسطة، وتكاليف تقويم الوحدات الخمس.",
+          room: "معمل الحاسوب والتقنية السحابية 🇸🇩",
+          ownerId: "me",
+          courseState: "ACTIVE"
+        });
+        courseId = newCourse.id;
+        log(`✓ تم إنشاء فصل تكنولوجيا السادس الابتدائي الجديد بنجاح! المعرف: ${courseId}`);
+      }
+      setSyncSuccessCourseId(courseId);
+      setSyncProgress(20);
+
+      // Loop through units
+      for (let i = 0; i < CURRICULUM_UNITS.length; i++) {
+        const unit = CURRICULUM_UNITS[i];
+        const stepNum = i + 1;
+        const progressIncrement = 20 + (i * 15);
+        
+        log(`📦 جاري معالجة الوحدة المنهجية [${stepNum}/5]: ${unit.name}...`);
+        setSyncCurrentAction(`جاري إنشاء موضوع (Topic): ${unit.name}...`);
+        
+        // 1. Create Topic
+        const topic = await createClassroomTopic(courseId, unit.name);
+        const topicId = topic.topicId;
+        log(`✓ تم بنجاح إنشاء الموضوع "${unit.name}" في كلاس روم بترميز الهوية: ${topicId}`);
+        
+        // 2. Create Materials for each lesson in the unit
+        for (let j = 0; j < unit.lessons.length; j++) {
+          const lesson = unit.lessons[j];
+          log(`📖 جاري صياغة ورفع المادة التعليمية (Material): "${lesson.title}"...`);
+          setSyncCurrentAction(`كتابة ذكية للملخص: ${lesson.title}...`);
+          
+          await createClassroomMaterial(courseId, {
+            title: lesson.title,
+            description: lesson.description,
+            state: 'PUBLISHED',
+            topicId: topicId
+          });
+          log(`✓ تم نشر ملخص درس "${lesson.title}" بنجاح في الموضوع المختار.`);
+        }
+        
+        // 3. Create Unit Quiz/Assignment
+        log(`📝 جاري صياغة تكليف التقويم نهاية موضوع: "${unit.name}"...`);
+        setSyncCurrentAction(`تأليف الواجبات: ${unit.assignment.title}...`);
+        
+        await createClassroomCourseWork(courseId, {
+          title: unit.assignment.title,
+          description: unit.assignment.description,
+          workType: 'ASSIGNMENT',
+          state: 'PUBLISHED',
+          maxPoints: 100,
+          topicId: topicId
+        });
+        log(`✓ تم نشر تكليف تقويم الوحدة المنهجية "${unit.assignment.title}" بنجاح.`);
+
+        setSyncProgress(progressIncrement);
+      }
+
+      log('🎉 إنجاز مذهل! اكتملت المعالجة والمزامنة السحابية الكاملة بكفاءة ممتازة وبدون تكلفة مالية!');
+      log('📱 يمكنك الآن فتح تطبيق Google Classroom على أي هاتف أو متصفح لرؤية المنهج الدراسي المرتب والمعد خصيصاً لتفوق طلابنا!');
+      
+      setSyncCurrentAction('اكتمل نقل المنهج لـ Google Classroom بنجاح! 🇸🇩');
+      setSyncProgress(100);
+      playSound('success');
+      onEmitPoints(50);
+      onEmitAchievement('ach-7'); // Give appropriate achievement
+      loadClassroomCourses();
+    } catch (error: any) {
+      playSound('fail');
+      log(`🚨 فشل إتمام المزامنة بسبب خطأ من سيرفرات غوغل: ${error.message || error}`);
+      setSyncCurrentAction('فشل الاتصال أو المزامنة! 🚨');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const loadClassroomCourses = async () => {
     setLoadingCourses(true);
     try {
@@ -556,7 +774,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
               <div className="space-y-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                   <div className="text-right">
-                    <h4 className="text-sm font-black text-white flex items-center gap-1.5">
+                     <h4 className="text-sm font-black text-white flex items-center gap-1.5">
                       <span>الفصول والواجبات بـ Google Classroom 🏫</span>
                     </h4>
                     <p className="text-[10px] text-indigo-300 font-semibold leading-relaxed">
@@ -571,6 +789,87 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                     <RefreshCw className={`w-3.5 h-3.5 ${loadingCourses ? 'animate-spin' : ''}`} />
                     <span>تحديث الفصول</span>
                   </button>
+                </div>
+
+                {/* 🇸🇩 Google Classroom Curriculum Auto-Sync Dashboard 🇸🇩 */}
+                <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border-2 border-indigo-500/20 rounded-[35px] p-6 space-y-4 shadow-xl">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div className="text-right space-y-1.5 flex-1">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-950 border border-indigo-800 rounded-full text-[9px] font-extrabold text-cyan-400">
+                        <Sparkles className="w-3 h-3 text-cyan-305 animate-pulse text-yellow-350" />
+                        <span>تقنية المزامنة والربط الميكانيكي الشامل</span>
+                      </span>
+                      <h4 className="text-md md:text-lg font-black text-white flex items-center gap-2">
+                        <span>معالج ربط كلاس روم وتفريغ المنهج التكنولوجي السوداني 📋🇸🇩</span>
+                      </h4>
+                      <p className="text-[11px] text-indigo-200 leading-normal font-semibold max-w-3xl">
+                        أداة هندسية متطورة تقوم بالاتصال المباشر بـ <strong>Google Classroom API</strong> لحسابك للتفحص، وإنشاء فصل <strong>"مادة تكنولوجيا المعلومات والاتصالات - الصف السادس"</strong> تلقائياً، مع تقسيمه لـ 5 وحدات موضوعية (Topics) وإنشاء ملخص مبسط موجه للطلاب بالسودان لكل درس وحقن أسئلة التقارير والواجبات بدون أي تكلفة!
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleAutoSyncClassroom}
+                      disabled={isSyncing}
+                      className="w-full lg:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 hover:scale-[1.02] transform duration-200 font-black text-xs px-6 py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-45 shrink-0"
+                    >
+                      {isSyncing ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      ) : (
+                        <Trophy className="w-4 h-4 text-slate-950" />
+                      )}
+                      <span>مزامنة وتجذير كتاب التكنولوجيا ⚡</span>
+                    </button>
+                  </div>
+
+                  {/* Sync status and progress logs terminal widget */}
+                  {(isSyncing || syncProgress > 0) && (
+                    <div className="border border-indigo-950/80 bg-slate-950/90 p-4 md:p-5 rounded-3xl space-y-3 animate-fade-in text-right">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-extrabold text-cyan-400 font-mono">{syncProgress}% مكتمل</span>
+                        <span className="font-black text-indigo-200">{syncCurrentAction}</span>
+                      </div>
+                      
+                      {/* Progress bar structure */}
+                      <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-indigo-950">
+                        <div
+                          className="bg-gradient-to-r from-cyan-400 via-indigo-500 to-emerald-400 h-full transition-all duration-500"
+                          style={{ width: `${syncProgress}%` }}
+                        ></div>
+                      </div>
+
+                      {/* Awesome Interactive console logs panel */}
+                      <div className="space-y-1.5">
+                        <span className="block text-[10px] font-bold text-indigo-300">سجل عمليات الـ API ووحدات معيار الاستعلام:</span>
+                        <div className="bg-slate-950/90 border border-indigo-950/80 rounded-2xl p-4 h-44 overflow-y-auto font-mono text-[10px] text-zinc-300 text-right space-y-1 scrollbar-thin scrollbar-thumb-indigo-950" dir="rtl">
+                          {syncLogs.length === 0 ? (
+                            <span className="text-zinc-500 italic block text-center py-12 font-sans font-semibold">بانتظار تفعيل المعالج لبدء نقل البيانات...</span>
+                          ) : (
+                            syncLogs.map((logMsg, idx) => (
+                              <div key={idx} className="whitespace-pre-wrap font-sans text-right text-emerald-400/90 hover:text-emerald-300 transition-colors">
+                                {logMsg}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {syncProgress === 100 && syncSuccessCourseId && (
+                        <div className="p-4 bg-emerald-950/30 border border-emerald-500/20 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                          <span className="text-xs font-black text-emerald-300 block">
+                            ✓ مبارك! تم صب وتجهيز المنهج السوداني الدراسي كاملاً في Google Classroom بنجاح!
+                          </span>
+                          <a
+                            href={`https://classroom.google.com/c/${syncSuccessCourseId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-emerald-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-black hover:underline flex items-center justify-center gap-1.5 cursor-pointer max-w-fit shrink-0"
+                          >
+                            <span>تصفح الفصل الحقيقي الآن 🔗</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {loadingCourses ? (

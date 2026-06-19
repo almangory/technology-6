@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Cpu, 
   RotateCcw, 
@@ -22,7 +23,9 @@ import {
   User,
   Folder,
   Moon,
-  Sun
+  Sun,
+  Cable,
+  Snowflake
 } from 'lucide-react';
 import { UserStats } from '../types';
 
@@ -258,10 +261,55 @@ const renderRealisticPartSVG = (id: string, isPlacedInMotherboard = false, isPow
           <circle cx="71" cy="40" r="2.5" fill={isPlacedInMotherboard && isPoweredOn ? "#10b981" : "#3b82f6"} className={isPlacedInMotherboard && isPoweredOn ? "animate-pulse" : ""} />
         </svg>
       );
+    case 'cooler':
+      return (
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+          {/* Base plate block (copper color) */}
+          <rect x="25" y="25" width="50" height="50" rx="4" fill="#ea580c" stroke="#9a3412" strokeWidth="1.5" />
+          {/* Silver metallic fins grid overlay */}
+          <g stroke="#94a3b8" strokeWidth="1.5">
+            {[30, 35, 40, 45, 50, 55, 60, 65, 70].map((x) => (
+              <line key={x} x1={x} y1="20" x2={x} y2="80" />
+            ))}
+          </g>
+          {/* Heat pipes (copper loops extending out) */}
+          <path d="M 25 35 C 10 35, 10 65, 25 65" fill="none" stroke="#ea580c" strokeWidth="3" />
+          <path d="M 75 35 C 90 35, 90 65, 75 65" fill="none" stroke="#ea580c" strokeWidth="3" />
+          {/* Mounting brackets (silver) */}
+          <rect x="20" y="47" width="10" height="6" rx="1" fill="#cbd5e1" stroke="#475569" />
+          <rect x="70" y="47" width="10" height="6" rx="1" fill="#cbd5e1" stroke="#475569" />
+          <circle cx="25" cy="50" r="1.5" fill="#475569" />
+          <circle cx="75" cy="50" r="1.5" fill="#475569" />
+          {/* Small cooler brand center badge */}
+          <circle cx="50" cy="50" r="12" fill="#1e293b" stroke="#38bdf8" strokeWidth="1" />
+          <text x="50" y="52" fill="#38bdf8" fontSize="6.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">COOL</text>
+        </svg>
+      );
+    case 'sata':
+      return (
+        <svg viewBox="0 0 100 60" className="w-full h-full drop-shadow-sm">
+          {/* Red SATA flexible flat cable path */}
+          <path d="M 10 30 C 35 10, 65 50, 90 30" fill="none" stroke="#ef4444" strokeWidth="6" strokeLinecap="round" />
+          {/* Black connector heads on ends */}
+          <g fill="#18181b" stroke="#374151" strokeWidth="0.5">
+            {/* Left head */}
+            <rect x="4" y="22" width="12" height="16" rx="1" transform="rotate(-15 10 30)" />
+            {/* Right head with L-shape notch indication */}
+            <rect x="84" y="22" width="12" height="16" rx="1" transform="rotate(15 90 30)" />
+          </g>
+          {/* Silver lock latch clips */}
+          <rect x="8" y="27" width="4" height="6" rx="0.5" fill="#e2e8f0" transform="rotate(-15 10 30)" />
+          <rect x="88" y="27" width="4" height="6" rx="0.5" fill="#e2e8f0" transform="rotate(15 90 30)" />
+          {/* Small text flag */}
+          <text x="50" y="15" fill="#f43f5e" fontSize="5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">SATA L-Type</text>
+        </svg>
+      );
     default:
       return null;
   }
 };
+
+const INSTALL_ORDER = ['cpu', 'cooler', 'fan', 'ram', 'storage', 'gpu', 'sata', 'psu'];
 
 export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
   stats,
@@ -386,14 +434,35 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
     }
   };
 
+  // Speaks helper instructions out loud using Web Speech synthesis or logs appropriately
+  const speakPhrase = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ar-SA';
+      utterance.rate = 0.85;
+      utterance.pitch = 1.0;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const arVoice = voices.find(v => v.lang.toLowerCase().includes('ar'));
+      if (arVoice) {
+        utterance.voice = arVoice;
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn("TTS Speech Synthesis warning: ", err);
+    }
+  };
+
   // Lab Tab states: 'assembly' | 'booting' | 'os_menu' | 'dos' | 'windows' | 'linux'
   const [labState, setLabState] = useState<'assembly' | 'booting' | 'os_menu' | 'dos' | 'windows' | 'linux'>('assembly');
 
-  // Hardcoded initial 6 motherboard parts matching the curriculum requirements exactly
+  // Hardcoded initial motherboard parts matching the curriculum requirements exactly
   const [parts, setParts] = useState<ComponentPart[]>([
     {
       id: 'cpu',
-      name: 'وحدة',
+      name: 'المعالج (CPU)',
       englishName: 'CPU (Processor)',
       desc: 'وحدة المعالجة المركزية هي عقل المعالجة المفكر ومحلل جميع البيانات والأوامر البرمجية.',
       role: 'تقوم بمسك ونقل الأوامر البرمجية ومعالجة البيانات الحسابية الأساسية للجهاز لتشغيل البرامج.',
@@ -402,8 +471,28 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
       color: 'from-amber-400/20 to-amber-500/10 border-amber-500/30 text-amber-400 font-bold'
     },
     {
+      id: 'cooler',
+      name: 'مشتت الحرارة (CPU Cooler)',
+      englishName: 'CPU Heatsink / Cooler',
+      desc: 'مشتت الحرارة (Heatsink) هو المبدد المعدني الأساسي الذي يمتص الحرارة الشديدة مباشرة من سطح المعالج.',
+      role: 'يقوم بنقل وتوزيع الطاقة الحرارية الضخمة المنبعثة من المعالج نحو الزعانف المعدنية ليتم طردها عبر مروحة التبريد.',
+      placed: false,
+      icon: 'Snowflake',
+      color: 'from-violet-400/20 to-violet-500/10 border-violet-500/30 text-violet-400 font-bold'
+    },
+    {
+      id: 'fan',
+      name: 'مروحة التبريد',
+      englishName: 'Cooler Fan',
+      desc: 'مروحة التبريد هي الدرع الواقي والمنظم الحراري الحصين لحماية المكونات من ارتفاع درجات الحرارة.',
+      role: 'تأخذ الهواء الساخن الناجم عن الطاقة الكهربائية وتطرده بعيداً لضمان تشغيل صحي ومستقر للمعالج.',
+      placed: false,
+      icon: 'Activity',
+      color: 'from-cyan-400/20 to-cyan-500/10 border-cyan-500/30 text-cyan-400 font-bold'
+    },
+    {
       id: 'ram',
-      name: 'ذاكرة',
+      name: 'ذاكرة الوصول العشوائي (RAM)',
       englishName: 'RAM (Memory)',
       desc: 'ذاكرة الوصول العشوائي هي ذاكرة العمل المؤقتة فائقة السرعة التي تفقد بياناتها فور إطفاء الجهاز.',
       role: 'تحتفظ ببيانات التطبيقات والبرامج والملفات المفتوحة حالياً لتسهيل وسرعة معالجة المهام.',
@@ -413,7 +502,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
     },
     {
       id: 'gpu',
-      name: 'كرت',
+      name: 'كرت الشاشة (GPU)',
       englishName: 'GPU (Graphics Card)',
       desc: 'كرت الشاشة هو المعالج المسؤول الأول عن إنتاج الرسوميات ومعالجة الفيديوهات وتلوين بكسلات العرض.',
       role: 'يقوم بتحويل الأكواد البرمجية إلى صور ملونة وتفاصيل وتأثيرات بصرية ورسومية مذهلة على الشاشة.',
@@ -423,7 +512,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
     },
     {
       id: 'storage',
-      name: 'وحدة تخزين M.2',
+      name: 'وحدة تخزين M.2 SSD',
       englishName: 'M.2 SSD (Storage)',
       desc: 'وحدة تخزين القرص السريع M.2 SSD هي مقر الحفظ الدائم والمستقر لكامل ملفاتك ونظام التشغيل البرمجي.',
       role: 'تقوم بتخزين واستدعاء نظام التشغيل والملفات والبرامج بشكل دائم حتى بعد فصل التيار الكهربائي.',
@@ -432,14 +521,14 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
       color: 'from-blue-400/20 to-blue-500/10 border-blue-500/30 text-blue-400 font-bold'
     },
     {
-      id: 'fan',
-      name: 'مروحة',
-      englishName: 'Cooler Fan',
-      desc: 'مروحة التبريد هي الدرع الواقي والمنظم الحراري الحصين لحماية المكونات من ارتفاع درجات الحرارة.',
-      role: 'تأخذ الهواء الساخن الناجم عن الطاقة الكهربائية وتطرده بعيداً لضمان تشغيل صحي ومستقر للمعالج.',
+      id: 'sata',
+      name: 'كابلات البيانات (SATA Cables)',
+      englishName: 'SATA Data Cables',
+      desc: 'كابل بيانات SATA هو حلقة الوصل والممر المخصص لنقل سطور البيانات بسرعة وأمان بين مخازن الأقراص الصلبة ولوحة الأم.',
+      role: 'نقل حزم الملفات والصور ونظام التشغيل بسرعة فائقة وبشكل تدفقي مذهل وآمن بين منافذ التخزين والمعالج.',
       placed: false,
-      icon: 'Activity',
-      color: 'from-cyan-400/20 to-cyan-500/10 border-cyan-500/30 text-cyan-400 font-bold'
+      icon: 'Cable',
+      color: 'from-rose-400/20 to-rose-500/10 border-rose-500/30 text-rose-400 font-bold'
     },
     {
       id: 'psu',
@@ -457,6 +546,14 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
   const [draggingPartId, setDraggingPartId] = useState<string | null>(null);
   const [hoveredMotherboardSlot, setHoveredMotherboardSlot] = useState<string | null>(null);
   const isAssemblyComplete = parts.every(p => p.placed);
+  
+  const nextRequiredPartId = INSTALL_ORDER.find(id => !parts.find(p => p.id === id)?.placed) || null;
+  const isTargetedSlot = (slotName: string) => {
+    if (!beginnerMode) return false;
+    if (!nextRequiredPartId) return false;
+    if (slotName === 'cpu' && ['cpu', 'cooler', 'fan'].includes(nextRequiredPartId)) return true;
+    return slotName === nextRequiredPartId;
+  };
 
   // Booting diagnostic logs in animation
   const [bootLogs, setBootLogs] = useState<string[]>([]);
@@ -473,9 +570,8 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
   ]);
 
   // Windows Desktop simulation states
-  const [winWallpaper, setWinWallpaper] = useState<'aurora' | 'cyber' | 'nile'>('aurora');
+  const [winWallpaper, setWinWallpaper] = useState<'aurora' | 'cyber' | 'nile' | 'sudan'>('sudan');
   const [winTime, setWinTime] = useState<string>('١٢:٠٠ م');
-  const [winOpenApp, setWinOpenApp] = useState<'none' | 'notepad' | 'calculator' | 'paint'>('none');
   const [notepadText, setNotepadText] = useState('كتابة خواطر طالب الصف السادس عن تجميع الحاسوب الممتع...');
   const [savedNotepads, setSavedNotepads] = useState<string>('');
 
@@ -494,25 +590,122 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
     'root@sudan-ict-student:~$ ',
   ]);
 
+  // --- BEGINNER MODE & VOICE NAVIGATION STATES ---
+  const [beginnerMode, setBeginnerMode] = useState<boolean>(false);
+  const [speechActive, setSpeechActive] = useState<boolean>(true);
+  const [speechSubtitle, setSpeechSubtitle] = useState<string>('مرحباً بك في المعمل! يمكنك تفعيل "وضع المبتدئ" للحصول على مرافقة صوتية وإرشادية خطوة بخطوة.');
+
+  // --- OS SECURITY LOGIN STATES (WINDOWS & LINUX) ---
+  const [winLoggedIn, setWinLoggedIn] = useState<boolean>(false);
+  const [winPassword, setWinPassword] = useState<string>('');
+  const [winLoginError, setWinLoginError] = useState<string>('');
+  const [winShowHint, setWinShowHint] = useState<boolean>(false);
+
+  const [linuxLoggedIn, setLinuxLoggedIn] = useState<boolean>(false);
+  const [linuxPassword, setLinuxPassword] = useState<string>('');
+  const [linuxLoginError, setLinuxLoginError] = useState<string>('');
+  const [linuxShowHint, setLinuxShowHint] = useState<boolean>(false);
+
+  // --- EXPANDED WINDOWS GUI STATE ENGINE ---
+  const [winOpenApp, setWinOpenApp] = useState<'none' | 'notepad' | 'calculator' | 'paint' | 'word' | 'powerpoint' | 'browser' | 'files'>('none');
+  const [winMinimized, setWinMinimized] = useState<boolean>(false);
+  const [winMaximized, setWinMaximized] = useState<boolean>(false);
+
+  // Word Editor States
+  const [wordDocumentName, setWordDocumentName] = useState('شرح_اللوحة_الأم');
+  const [wordContentText, setWordContentText] = useState('كتيب الصف السادس الأساسي: اللوحة الأم هي العمود الفقري للحاسوب، وعليها يركب المعالج والرام.');
+  
+  // Powerpoint Presentation States
+  const [pptCurrentSlide, setPptCurrentSlide] = useState(0);
+
+  // Simulation Web Browser States
+  const [browserUrl, setBrowserUrl] = useState('sudan-edu.net');
+
+  // Virtual Saved File Database
+  const [savedFiles, setSavedFiles] = useState<Array<{ name: string; content: string; type: 'note' | 'word' | 'drawing' }>>([
+    { name: 'مذكرة_وطن.txt', content: 'جمهورية السودان بلد التقدم والتكنولوجيا المشرقة.', type: 'note' },
+    { name: 'درس_العتاد_الأول.doc', content: 'اللوحة الأم تربط المعالج ووحدات الإدخال والإخراج مع الذاكرة العشوائية.', type: 'word' }
+  ]);
+
+  // Guidance speech player per steps
+  const playStepVoiceGuidance = (partId: string | null) => {
+    let text = '';
+    switch (partId) {
+      case 'cpu':
+        text = 'الآن، قم بتركيب المعالج (CPU) في مقبسه المخصص على لوحة الأم. المعالج هو عقل الكمبيوتر المفكر.';
+        break;
+      case 'cooler':
+        text = 'المعالج غاية في السرعة وينتج طاقة حرارية شديدة. ضع المبدّد المعدني لحرارة المعالج (CPU Heatsink) مباشرة فوق المعالج.';
+        break;
+      case 'fan':
+        text = 'رائع، والآن قم بتركيب مروحة التبريد لطرد الهواء الساخن من المشتت لضمان استقرار المعالج.';
+        break;
+      case 'ram':
+        text = 'الخطوة التالية هي تركيب ذاكرة الوصول العشوائي (RAM) في منافذها الطولية لتخزين البيانات المفتوحة.';
+        break;
+      case 'storage':
+        text = 'ممتاز، والآن نركب وحدة التخزين فائقة السرعة M.2 SSD لحفظ نظام التشغيل والملفات بشكل دائم.';
+        break;
+      case 'gpu':
+        text = 'رائع جداً، قم بتركيب ملوّن الرسوميات، كرت الشاشة (GPU)، في منفذ PCIe لنرى اللوحات الملونة.';
+        break;
+      case 'sata':
+        text = 'الآن صِل كابلات البيانات ساتا (SATA Cables) لربط منافذ البيانات والمحركات الإضافية بلوحة الأم.';
+        break;
+      case 'psu':
+        text = 'الخطوة الأخيرة، ركّب مزود الطاقة البور سبلاي (PSU) لتزويد لوحة الأم وكافة القطع بالطاقة الكهربية الكافية.';
+        break;
+      default:
+        text = 'تهانينا الحارة! لقد أكملت تركيب جميع قطع الحاسوب بنجاح تام! اضغط الآن على زر تشغيل الحاسوب باللون الأخضر لبدء الإقلاع.';
+    }
+    setSpeechSubtitle(text);
+    if (speechActive) {
+      speakPhrase(text);
+    }
+  };
+
   // Handle installing a part
   const handleInstallPart = (partId: string) => {
     const part = parts.find(p => p.id === partId);
     if (!part || part.placed) return;
+
+    if (beginnerMode) {
+      const nextRequired = INSTALL_ORDER.find(id => !parts.find(p => p.id === id)?.placed) || null;
+      if (nextRequired && partId !== nextRequired) {
+        playSound('laser');
+        const correctPartName = parts.find(p => p.id === nextRequired)?.name || '';
+        const warnText = `عزيزي الطالب، يرجى تركيب المكون الصحيح أولاً: ${correctPartName}!`;
+        setSpeechSubtitle(warnText);
+        speakPhrase(warnText);
+        return;
+      }
+    }
 
     if (partId === 'ram') {
       playSound('ram_click');
     } else {
       playSound('success');
     }
-    setParts(prev => prev.map(p => p.id === partId ? { ...p, placed: true } : p));
+    
+    const updatedParts = parts.map(p => p.id === partId ? { ...p, placed: true } : p);
+    setParts(updatedParts);
     setSelectedPartId(null);
     onEmitPoints(15);
 
     // If completely assembled
-    const nextCompleted = parts.map(p => p.id === partId ? { ...p, placed: true } : p).every(p => p.placed);
+    const nextCompleted = updatedParts.every(p => p.placed);
     if (nextCompleted) {
       onEmitAchievement('ach-2'); // Award Cyber/Hardware points!
       onEmitPoints(30);
+      const congratText = "يا لك من بطل ذكي! لقد أتممت تركيب جميع أجزاء الحاسب بنجاح مذهل وفق المنهاج المدرسي. اضغط الآن على زر تشغيل الحاسوب باللون الأخضر لبدء الإقلاع!";
+      setSpeechSubtitle(congratText);
+      speakPhrase(congratText);
+    } else if (beginnerMode) {
+      const nextRequiredId = INSTALL_ORDER.find(id => !updatedParts.find(p => p.id === id)?.placed) || null;
+      // Play voice guide for the next part
+      setTimeout(() => {
+        playStepVoiceGuidance(nextRequiredId);
+      }, 900);
     }
   };
 
@@ -525,9 +718,11 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
     const diagnostics = [
       'فحص مصدر الطاقة PSU: ناجح [جهود فولتية مستمرة ومستقرة]',
+      'التحقق من مشتت الحرارة (CPU Cooler Heatsink): مثبت بإحكام وامتصاص حراري ممتاز',
       'تدوير مروحة المعالج CPU Fan: تعمل بسرعة مذهلة 3200 دورة/دقيقة',
       'التحقق من سلامة المعالج: تم رصد معالج سداسي الأنوية (Sudanese ICT CPU)',
       'التعرف على الذاكرة: تم اكتشاف ذاكرة RAM بسعة 16 جيجابايت',
+      'فحص كابلات البيانات SATA: قراءة الحزم سليمة، والتوصيلات مشدودة، ومنافذ التخزين جاهزة',
       'قراءة وحدة التخزين SSD: تم العثور على قرص تخزين سريع بسعة 512 جيجابايت',
       'تهيئة كرت الشاشة GPU: دقة العرض ممتازة ونطاق التردد آمن',
       'فحص اللوحة الأم (BIOS): جميع الأقسام الإلكترونية سليمة وخاضعة للفحص الدراسي',
@@ -793,6 +988,8 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
         return 'bg-gradient-to-tr from-slate-950 via-purple-950 to-indigo-950';
       case 'nile':
         return 'bg-gradient-to-br from-teal-900 via-[#1e4e5e] to-sky-950';
+      case 'sudan':
+        return 'bg-gradient-to-br from-rose-750 via-slate-900 to-emerald-700 border-b-[24px] border-black';
       case 'aurora':
       default:
         return 'bg-gradient-to-br from-indigo-700 via-blue-600 to-pink-500';
@@ -942,7 +1139,96 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
           {/* 1. HARDWARE ASSEMBLY AREA */}
           {labState === 'assembly' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch h-full">
+            <div className="space-y-4">
+              
+              {/* Beginner Mode Assistance Panel */}
+              <div id="beginner_mode_panel" className="bg-slate-905 border-2 border-indigo-500/30 p-3.5 rounded-[24px] shadow-xl flex flex-col md:flex-row items-center justify-between gap-3 text-right bg-gradient-to-r from-slate-900 via-indigo-950/25 to-slate-900">
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <div className="bg-gradient-to-br from-indigo-600 to-cyan-500 rounded-xl p-2 px-2.5 shadow-md shrink-0">
+                    <span className="text-xl">🎓</span>
+                  </div>
+                  <div className="text-right">
+                    <h4 className="font-extrabold text-white text-[12px] sm:text-xs flex items-center gap-2">
+                       <span>مرشد المعمل التفاعلي (مساعد الصف السادس)</span>
+                       <span className="bg-indigo-755 text-cyan-300 text-[8px] px-1.5 py-0.5 rounded font-black">حديث 🔊</span>
+                    </h4>
+                    <p className="text-[10px] text-zinc-400 mt-0.5 leading-relaxed font-bold">
+                      {beginnerMode 
+                        ? '🟢 وضع المبتدئ نشط: يقوم بتسليط الضوء على القطع وتوجيهك بالصوت والترتيب الدراسي.' 
+                        : '⚪ وضع الاستكشاف الحر نشط: يمكنك تركيب أي قطعة بأي ترتيب تراه مناسباً.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Subtitle / spoken guidance */}
+                {beginnerMode && (
+                  <div className="bg-slate-950/80 p-2.5 rounded-xl border border-indigo-500/20 flex-1 w-full text-right animate-fadeIn">
+                    <span className="text-[9px] font-black text-cyan-400 block mb-0.5">🗣️ الدرس الصوتي المساعد للمعلّم عثمان:</span>
+                    <p className="text-[10.5px] text-zinc-100 leading-relaxed font-semibold">{speechSubtitle}</p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto justify-end">
+                  {/* Speech Toggle sound toggle */}
+                  {beginnerMode && (
+                    <button
+                      onClick={() => {
+                        const nextSpeech = !speechActive;
+                        setSpeechActive(nextSpeech);
+                        if (nextSpeech) {
+                          speakPhrase(speechSubtitle);
+                        } else {
+                          window.speechSynthesis.cancel();
+                        }
+                      }}
+                      className={`text-[9.5px] font-black px-2.5 py-1.5 rounded-lg border transition cursor-pointer active:scale-95 ${
+                        speechActive 
+                          ? 'bg-cyan-950/50 text-cyan-400 border-cyan-500' 
+                          : 'bg-zinc-850/50 text-zinc-400 border-zinc-700'
+                      }`}
+                    >
+                      {speechActive ? 'كتم الصوت 🔇' : 'تشغيل الصوت 🔊'}
+                    </button>
+                  )}
+
+                  {/* Re-speak manual button */}
+                  {beginnerMode && (
+                    <button
+                      onClick={() => { playSound('click'); speakPhrase(speechSubtitle); }}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-[9.5px] font-black px-3 py-1.5 rounded-lg border border-indigo-500 transition active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>تكرار الإرشاد 📢</span>
+                    </button>
+                  )}
+
+                  {/* Toggle Mode */}
+                  <button
+                    onClick={() => {
+                      playSound('success');
+                      const nextMode = !beginnerMode;
+                      setBeginnerMode(nextMode);
+                      if (nextMode) {
+                        const nextRequired = INSTALL_ORDER.find(id => !parts.find(p => p.id === id)?.placed) || null;
+                        setTimeout(() => {
+                          playStepVoiceGuidance(nextRequired);
+                        }, 100);
+                      } else {
+                        setSpeechSubtitle('تصفح حر مستمر...');
+                        speakPhrase('تم تعطيل وضع المبتدئ، يمكنك الآن تجميع العتاد بأي ترتيب تفضله.');
+                      }
+                    }}
+                    className={`text-[9.5px] font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 border ${
+                      beginnerMode 
+                        ? 'bg-rose-950/40 text-rose-400 border-rose-900/60 hover:bg-rose-900/40' 
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
+                    }`}
+                  >
+                    {beginnerMode ? 'التحول للاستكشاف الحر 🧩' : 'تفعيل وضع المبتدئ تتبعي 🎓'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
               
               {/* Right Column: "لوحة كتيب المنهج لتجميع العتاد" (Curriculum Manual) - Col: 4 (RTL starts here) */}
               <div className="lg:col-span-4 bg-slate-900/95 border border-indigo-500/20 p-5 rounded-3xl flex flex-col justify-between space-y-4 lg:order-1">
@@ -1066,60 +1352,62 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                 {/* 2. MAIN MOTHERBOARD CONTAINER WITH MOBILE HORIZONTAL PANNING */}
                 <div className="w-full overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
-                  <div className="relative min-w-[500px] lg:min-w-0 bg-slate-950/90 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between z-10 shadow-inner">
+                  <div className="relative min-w-[500px] lg:min-w-0 bg-slate-950/90 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between z-10 shadow-inner border-indigo-950/40">
                   
-                  {/* Interactive Slots overlay */}
-                  <div className="relative w-full h-full min-h-[320px]">
-                    
-                    {/* F. PSU Socket / Slot (Top-Left) */}
+                    {/* Interactive Slots overlay */}
+                    <div className="relative w-full h-full min-h-[320px]">
+                      
+                      {/* F. PSU Socket / Slot (Top-Left) */}
+                      <div 
+                        id="slot-psu"
+                        onClick={() => { 
+                          playSound('click'); 
+                          setSelectedPartId('psu'); 
+                          if (!parts.find(p => p.id === 'psu')?.placed) {
+                            handleInstallPart('psu');
+                          }
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (draggingPartId === 'psu') setHoveredMotherboardSlot('psu');
+                        }}
+                        onDragLeave={() => setHoveredMotherboardSlot(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (draggingPartId === 'psu') handleInstallPart('psu');
+                          setHoveredMotherboardSlot(null);
+                        }}
+                        className={`absolute top-[8%] left-[6%] w-[110px] h-28 rounded-2xl cursor-pointer border flex flex-col justify-center transition-all z-10 ${
+                          parts.find(p => p.id === 'psu')?.placed
+                            ? 'bg-slate-900/90 border-emerald-500'
+                            : selectedPartId === 'psu'
+                            ? 'bg-indigo-650/40 border-cyan-400 animate-pulse ring-2 ring-yellow-400'
+                            : hoveredMotherboardSlot === 'psu'
+                            ? 'bg-indigo-500/30 border-cyan-300'
+                            : 'bg-slate-950 border-dashed border-indigo-500/15 text-indigo-300/30 hover:border-indigo-400'
+                        } ${isTargetedSlot('psu') ? 'ring-[3.5px] ring-yellow-400 animate-pulse border-yellow-400 bg-yellow-500/25 shadow-[0_0_15px_rgba(234,179,8,0.5)] z-20 hover:scale-105' : ''}`}
+                      >
+                        {parts.find(p => p.id === 'psu')?.placed ? (
+                          <div className="w-full h-full p-2.5 animate-fadeIn">
+                            {renderRealisticPartSVG('psu', true, isAssemblyComplete)}
+                          </div>
+                        ) : (
+                          <div className="text-center p-1.5 flex flex-col items-center justify-center">
+                            <Power className="w-7 h-7 text-indigo-500/45 mb-1 animate-pulse" />
+                            <span className="text-[8px] font-bold block text-indigo-200">مشغل الطاقة</span>
+                            <span className="text-[7px] text-cyan-400/60 font-bold block font-mono">ATX_POWER_PSU</span>
+                            <span className="bg-yellow-400/20 text-yellow-300 text-[6.5px] px-1 py-0.5 rounded font-black mt-1">اضغط للتثبيت 🔌</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* A. CPU Socket & Fan bracket combo (Top-Center) */}
                     <div 
-                      onClick={() => { 
-                        playSound('click'); 
-                        setSelectedPartId('psu'); 
-                        if (!parts.find(p => p.id === 'psu')?.placed) {
-                          handleInstallPart('psu');
-                        }
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        if (draggingPartId === 'psu') setHoveredMotherboardSlot('psu');
-                      }}
-                      onDragLeave={() => setHoveredMotherboardSlot(null)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (draggingPartId === 'psu') handleInstallPart('psu');
-                        setHoveredMotherboardSlot(null);
-                      }}
-                      className={`absolute top-[8%] left-[6%] w-[110px] h-28 rounded-2xl cursor-pointer border flex flex-col justify-center transition-all z-10 ${
-                        parts.find(p => p.id === 'psu')?.placed
-                          ? 'bg-slate-900/90 border-emerald-500'
-                          : selectedPartId === 'psu'
-                          ? 'bg-indigo-650/40 border-cyan-400 animate-pulse ring-2 ring-yellow-400'
-                          : hoveredMotherboardSlot === 'psu'
-                          ? 'bg-indigo-500/30 border-cyan-300'
-                          : 'bg-slate-950 border-dashed border-indigo-500/15 text-indigo-300/30 hover:border-indigo-400'
-                      }`}
-                    >
-                      {parts.find(p => p.id === 'psu')?.placed ? (
-                        <div className="w-full h-full p-2.5 animate-fadeIn">
-                          {renderRealisticPartSVG('psu', true, isAssemblyComplete)}
-                        </div>
-                      ) : (
-                        <div className="text-center p-1.5 flex flex-col items-center justify-center">
-                          <Power className="w-7 h-7 text-indigo-500/45 mb-1 animate-pulse" />
-                          <span className="text-[8px] font-bold block text-indigo-200">مشغل الطاقة</span>
-                          <span className="text-[7px] text-cyan-400/60 font-bold block font-mono">ATX_POWER_PSU</span>
-                          <span className="bg-yellow-400/20 text-yellow-300 text-[6.5px] px-1 py-0.5 rounded font-black mt-1">اضغط للتثبيت 🔌</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* A. CPU Socket & Fan bracket combo (Top-Center) */}
-                    <div 
+                      id="slot-cpu"
                       className="absolute top-[8%] left-[50%] -translate-x-1/2 w-32 h-32 flex flex-col items-center justify-center transition-all"
                       onDragOver={(e) => {
                         e.preventDefault();
-                        if (draggingPartId === 'cpu' || draggingPartId === 'fan') {
+                        if (draggingPartId === 'cpu' || draggingPartId === 'cooler' || draggingPartId === 'fan') {
                           setHoveredMotherboardSlot(draggingPartId);
                         }
                       }}
@@ -1127,7 +1415,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                       onDrop={(e) => {
                         e.preventDefault();
                         const dragged = draggingPartId;
-                        if (dragged === 'cpu' || dragged === 'fan') {
+                        if (dragged === 'cpu' || dragged === 'cooler' || dragged === 'fan') {
                           handleInstallPart(dragged);
                         }
                         setHoveredMotherboardSlot(null);
@@ -1142,12 +1430,18 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             handleInstallPart('cpu');
                             setSelectedPartId('cpu');
                           } else {
-                            const isFanPlaced = parts.find(p => p.id === 'fan')?.placed;
-                            if (!isFanPlaced) {
-                              handleInstallPart('fan');
-                              setSelectedPartId('fan');
+                            const isCoolerPlaced = parts.find(p => p.id === 'cooler')?.placed;
+                            if (!isCoolerPlaced) {
+                              handleInstallPart('cooler');
+                              setSelectedPartId('cooler');
                             } else {
-                              setSelectedPartId('cpu');
+                              const isFanPlaced = parts.find(p => p.id === 'fan')?.placed;
+                              if (!isFanPlaced) {
+                                handleInstallPart('fan');
+                                setSelectedPartId('fan');
+                              } else {
+                                setSelectedPartId('cpu');
+                              }
                             }
                           }
                         }}
@@ -1159,7 +1453,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             : hoveredMotherboardSlot === 'cpu'
                             ? 'bg-indigo-500/40 border-cyan-300'
                             : 'bg-slate-950 border-dashed border-indigo-500/15 text-indigo-300/30 hover:border-indigo-400'
-                        }`}
+                        } ${isTargetedSlot('cpu') ? 'ring-[3.5px] ring-yellow-400 animate-pulse border-yellow-400 bg-yellow-500/25 shadow-[0_0_15px_rgba(234,179,8,0.5)] z-20 hover:scale-105' : ''}`}
                       >
                         {/* CPU Placement rendering */}
                         {parts.find(p => p.id === 'cpu')?.placed ? (
@@ -1167,7 +1461,14 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           <div className="relative w-full h-full">
                             {renderRealisticPartSVG('cpu', true)}
                             
-                            {/* B. Fan on top of CPU */}
+                            {/* Heatsink / Cooler (cooler) sits on top of CPU */}
+                            {parts.find(p => p.id === 'cooler')?.placed && (
+                              <div className="absolute inset-2 bg-slate-900/45 rounded-xl p-0.5 animate-fadeIn">
+                                {renderRealisticPartSVG('cooler', true)}
+                              </div>
+                            )}
+                            
+                            {/* B. Fan on top of CPU Heatsink */}
                             {parts.find(p => p.id === 'fan')?.placed && (
                               <div className="absolute inset-0 bg-slate-950/80 rounded-2xl p-0.5 animate-fadeIn">
                                 {renderRealisticPartSVG('fan', true, isAssemblyComplete)}
@@ -1184,15 +1485,29 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         )}
                       </div>
 
-                      {/* Fan highlight tag if CPU logic is complete but Fan is not */}
-                      {parts.find(p => p.id === 'cpu')?.placed && !parts.find(p => p.id === 'fan')?.placed && (
+                      {/* Heatsink highlight tag if CPU is placed but Heatsink is not */}
+                      {parts.find(p => p.id === 'cpu')?.placed && !parts.find(p => p.id === 'cooler')?.placed && (
+                        <div 
+                          onClick={() => { 
+                            playSound('click'); 
+                            setSelectedPartId('cooler'); 
+                            handleInstallPart('cooler');
+                          }}
+                          className="absolute -bottom-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full cursor-pointer animate-bounce ring-2 ring-indigo-500 z-20 whitespace-nowrap"
+                        >
+                          ركّب المشتت هنا ❄️
+                        </div>
+                      )}
+
+                      {/* Fan highlight tag if Heatsink is placed but Fan is not */}
+                      {parts.find(p => p.id === 'cpu')?.placed && parts.find(p => p.id === 'cooler')?.placed && !parts.find(p => p.id === 'fan')?.placed && (
                         <div 
                           onClick={() => { 
                             playSound('click'); 
                             setSelectedPartId('fan'); 
                             handleInstallPart('fan');
                           }}
-                          className={`absolute -bottom-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full cursor-pointer animate-bounce ring-2 ring-indigo-500 z-20`}
+                          className="absolute -bottom-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full cursor-pointer animate-bounce ring-2 ring-indigo-500 z-20 whitespace-nowrap"
                         >
                           ركّب المروحة هنا 🌀
                         </div>
@@ -1201,6 +1516,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                     {/* C. Vertical RAM Slots Array (Right-Center) */}
                     <div 
+                      id="slot-ram"
                       onClick={() => { 
                         playSound('click'); 
                         setSelectedPartId('ram'); 
@@ -1218,7 +1534,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         if (draggingPartId === 'ram') handleInstallPart('ram');
                         setHoveredMotherboardSlot(null);
                       }}
-                      className="absolute top-[8%] left-[78%] w-12 h-32 flex justify-between items-center gap-1 cursor-pointer group"
+                      className={`absolute top-[8%] left-[78%] w-12 h-32 flex justify-between items-center gap-1 cursor-pointer group rounded-xl p-1 transition ${isTargetedSlot('ram') ? 'ring-[3px] ring-yellow-400 animate-pulse bg-yellow-500/10 shadow-[0_0_12px_rgba(234,179,8,0.4)] z-20 scale-105' : ''}`}
                     >
                       {/* Slots Visual lines */}
                       {[1, 2].map((slotNum) => {
@@ -1260,6 +1576,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                     {/* D. M.2 SSD Horizontal Socket (Middle) */}
                     <div 
+                      id="slot-storage"
                       onClick={() => { 
                         playSound('click'); 
                         setSelectedPartId('storage'); 
@@ -1285,7 +1602,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           : hoveredMotherboardSlot === 'storage'
                           ? 'bg-indigo-500/30 border-cyan-300'
                           : 'bg-slate-950 border-dashed border-indigo-500/10 hover:border-indigo-400'
-                      }`}
+                      } ${isTargetedSlot('storage') ? 'ring-[3px] ring-yellow-400 animate-pulse border-yellow-400 bg-yellow-500/25 shadow-[0_0_15px_rgba(234,179,8,0.5)] z-20 scale-[1.03] text-white' : ''}`}
                     >
                       {parts.find(p => p.id === 'storage')?.placed ? (
                         <div className="w-full h-full py-0.5">
@@ -1302,6 +1619,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                     {/* E. PCIe x16 GPU Horizontal Channel (Lower half) */}
                     <div 
+                      id="slot-gpu"
                       onClick={() => { 
                         playSound('click'); 
                         setSelectedPartId('gpu'); 
@@ -1327,7 +1645,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           : hoveredMotherboardSlot === 'gpu'
                           ? 'bg-indigo-500/30 border-cyan-300'
                           : 'bg-slate-950 border-dashed border-indigo-500/10 hover:border-indigo-400'
-                      }`}
+                      } ${isTargetedSlot('gpu') ? 'ring-[3.5px] ring-yellow-400 animate-pulse border-yellow-400 bg-yellow-500/25 shadow-[0_0_15px_rgba(234,179,8,0.5)] z-20 scale-[1.02]' : ''}`}
                     >
                       {parts.find(p => p.id === 'gpu')?.placed ? (
                         <div className="w-full h-full py-1">
@@ -1340,6 +1658,121 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         </div>
                       )}
                     </div>
+
+                    {/* G. SATA Data Cable Connection Slot (Middle-Right) */}
+                    <div 
+                      id="slot-sata"
+                      onClick={() => { 
+                        playSound('click'); 
+                        setSelectedPartId('sata'); 
+                        if (!parts.find(p => p.id === 'sata')?.placed) {
+                          handleInstallPart('sata');
+                        }
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (draggingPartId === 'sata') setHoveredMotherboardSlot('sata');
+                      }}
+                      onDragLeave={() => setHoveredMotherboardSlot(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggingPartId === 'sata') handleInstallPart('sata');
+                        setHoveredMotherboardSlot(null);
+                      }}
+                      className={`absolute top-[52%] left-[82%] -translate-x-1/2 w-14 h-12 rounded-xl cursor-pointer border flex flex-col justify-center transition-all ${
+                        parts.find(p => p.id === 'sata')?.placed
+                          ? 'border-rose-500 bg-slate-900/60'
+                          : selectedPartId === 'sata'
+                          ? 'bg-indigo-650/40 border-cyan-400 animate-pulse ring-2 ring-yellow-400 shadow-md shadow-cyan-400/20'
+                          : hoveredMotherboardSlot === 'sata'
+                          ? 'bg-indigo-500/30 border-cyan-300'
+                          : 'bg-slate-950 border-dashed border-indigo-500/10 hover:border-indigo-400'
+                      } ${isTargetedSlot('sata') ? 'ring-[3.5px] ring-yellow-400 animate-pulse border-yellow-400 bg-yellow-500/25 shadow-[0_0_15px_rgba(234,179,8,0.5)] z-20 scale-[1.05]' : ''}`}
+                    >
+                      {parts.find(p => p.id === 'sata')?.placed ? (
+                        <div className="w-full h-full py-1">
+                          {renderRealisticPartSVG('sata', true, isAssemblyComplete)}
+                        </div>
+                      ) : (
+                        <div className="w-full text-center p-1 text-indigo-400/30 font-bold flex flex-col items-center justify-center">
+                          <span className="text-[7.5px] block">منفذ SATA</span>
+                          <span className="bg-yellow-400/20 text-yellow-300 text-[6px] px-1 py-0.5 rounded font-black mt-1">تثبيت 🔌</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Floating Draggable Touch Pocket for mobile & tablet screens */}
+                    {selectedPartId && !parts.find(p => p.id === selectedPartId)?.placed && (
+                      <motion.div
+                        drag
+                        dragSnapToOrigin={true}
+                        dragElastic={0.1}
+                        dragMomentum={false}
+                        initial={{ opacity: 0, scale: 0.8, y: 15 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: 15 }}
+                        onDragStart={() => {
+                          setDraggingPartId(selectedPartId);
+                          playSound('click');
+                        }}
+                        onDrag={(event, info) => {
+                          const sId = selectedPartId;
+                          const targetSlotId = (sId === 'fan' || sId === 'cooler') ? 'slot-cpu' : `slot-${sId}`;
+                          const elem = document.getElementById(targetSlotId);
+                          if (elem) {
+                            const rect = elem.getBoundingClientRect();
+                            const padding = 45;
+                            if (
+                              info.point.x >= rect.left - padding &&
+                              info.point.x <= rect.right + padding &&
+                              info.point.y >= rect.top - padding &&
+                              info.point.y <= rect.bottom + padding
+                            ) {
+                              setHoveredMotherboardSlot(sId);
+                            } else {
+                              setHoveredMotherboardSlot(null);
+                            }
+                          }
+                        }}
+                        onDragEnd={(event, info) => {
+                          setDraggingPartId(null);
+                          setHoveredMotherboardSlot(null);
+                          const sId = selectedPartId;
+                          const targetSlotId = (sId === 'fan' || sId === 'cooler') ? 'slot-cpu' : `slot-${sId}`;
+                          const elem = document.getElementById(targetSlotId);
+                          if (elem) {
+                            const rect = elem.getBoundingClientRect();
+                            const padding = 55;
+                            if (
+                              info.point.x >= rect.left - padding &&
+                              info.point.x <= rect.right + padding &&
+                              info.point.y >= rect.top - padding &&
+                              info.point.y <= rect.bottom + padding
+                            ) {
+                              handleInstallPart(sId);
+                            }
+                          }
+                        }}
+                        whileDrag={{ 
+                          scale: 1.25, 
+                          zIndex: 50,
+                          rotate: 4,
+                          boxShadow: "0px 12px 30px rgba(34,211,238,0.55)",
+                        }}
+                        className="absolute bottom-3 right-3 z-30 bg-slate-900/95 border-2 border-cyan-400 text-white rounded-2xl p-2.5 shadow-xl shadow-cyan-400/30 flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none touch-none w-32 text-center"
+                        style={{ touchAction: 'none' }}
+                      >
+                        <div className="text-[7.5px] font-black bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded animate-pulse w-full">
+                          اسحب للتركيب 🎯
+                        </div>
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          {renderRealisticPartSVG(selectedPartId)}
+                        </div>
+                        <span className="text-[8px] font-extrabold text-white block truncate max-w-full">
+                          {parts.find(p => p.id === selectedPartId)?.name}
+                        </span>
+                      </motion.div>
+                    )}
 
                   </div>
 
@@ -1389,26 +1822,78 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 max-h-[340px] overflow-y-auto pr-1">
                     {parts.map((p) => (
-                      <div
+                      <motion.div
                         key={p.id}
-                        draggable={!p.placed}
+                        drag={!p.placed}
+                        dragSnapToOrigin={true}
+                        dragElastic={0.08}
+                        dragMomentum={false}
                         onDragStart={() => {
                           setDraggingPartId(p.id);
                           setSelectedPartId(p.id);
                           playSound('click');
                         }}
-                        onDragEnd={() => setDraggingPartId(null)}
+                        onDrag={(event, info) => {
+                          const slots = ['psu', 'cpu', 'ram', 'storage', 'gpu', 'sata', 'cooler', 'fan'];
+                          let hovered: string | null = null;
+                          for (const sId of slots) {
+                            const targetSlotId = (sId === 'fan' || sId === 'cooler') ? 'slot-cpu' : `slot-${sId}`;
+                            const elem = document.getElementById(targetSlotId);
+                            if (elem) {
+                              const rect = elem.getBoundingClientRect();
+                              const padding = 45;
+                              if (
+                                info.point.x >= rect.left - padding &&
+                                info.point.x <= rect.right + padding &&
+                                info.point.y >= rect.top - padding &&
+                                info.point.y <= rect.bottom + padding
+                              ) {
+                                hovered = sId;
+                                break;
+                              }
+                            }
+                          }
+                          setHoveredMotherboardSlot(hovered);
+                        }}
+                        onDragEnd={(event, info) => {
+                          setDraggingPartId(null);
+                          setHoveredMotherboardSlot(null);
+                          const targetSlotId = (p.id === 'fan' || p.id === 'cooler') ? 'slot-cpu' : `slot-${p.id}`;
+                          const elem = document.getElementById(targetSlotId);
+                          if (elem) {
+                            const rect = elem.getBoundingClientRect();
+                            const padding = 55;
+                            if (
+                              info.point.x >= rect.left - padding &&
+                              info.point.x <= rect.right + padding &&
+                              info.point.y >= rect.top - padding &&
+                              info.point.y <= rect.bottom + padding
+                            ) {
+                              handleInstallPart(p.id);
+                            }
+                          }
+                        }}
                         onClick={() => {
                           playSound('click');
                           setSelectedPartId(p.id);
                         }}
-                        className={`p-3 rounded-2xl border transition duration-150 transform active:scale-98 flex items-center justify-between gap-2.5 cursor-pointer ${
+                        whileDrag={{ 
+                          scale: 1.15, 
+                          zIndex: 50,
+                          cursor: 'grabbing',
+                          borderColor: '#22d3ee',
+                          boxShadow: "0px 10px 25px rgba(34, 211, 238, 0.4)" 
+                        }}
+                        className={`p-3 rounded-2xl border transition duration-150 transform active:scale-98 flex items-center justify-between gap-2.5 cursor-pointer touch-none select-none ${
                           p.placed 
                             ? 'bg-slate-950 border-indigo-900/30 text-indigo-400/60 opacity-55' 
+                            : beginnerMode && p.id === nextRequiredPartId
+                            ? 'bg-yellow-950/45 border-yellow-400 text-yellow-350 shadow-[0_0_15px_rgba(234,179,8,0.2)] font-black ring-2 ring-yellow-400 animate-pulse'
                             : selectedPartId === p.id 
                             ? 'bg-indigo-650/30 text-white border-cyan-400 ring-1 ring-cyan-400'
                             : 'bg-slate-900/70 hover:bg-slate-800 border-indigo-500/10 text-slate-200'
                         }`}
+                        style={{ touchAction: 'none' }}
                       >
                         {/* Real-life vector thumbnail preview */}
                         <div className="w-10 h-10 bg-slate-950 p-1.5 rounded-xl border border-indigo-500/10 shrink-0">
@@ -1421,12 +1906,14 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             <span>{p.name}</span>
                             {p.placed ? (
                               <span className="text-emerald-400 font-extrabold shrink-0 text-[10px]">✓</span>
+                            ) : beginnerMode && p.id === nextRequiredPartId ? (
+                              <span className="bg-yellow-400 text-slate-950 font-black text-[7.5px] px-1 py-0.5 rounded animate-bounce shrink-0">القطعة المطلوبة ⭐</span>
                             ) : (
                               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
                             )}
                           </h5>
                           <span className="text-[9px] block text-indigo-300/80 font-bold tracking-tight">
-                            {p.placed ? 'تم التركيب بنجاح' : 'متاح للسحب والتركيب'}
+                            {p.placed ? 'تم التركيب بنجاح' : beginnerMode && p.id === nextRequiredPartId ? '👉 اسحبني أو اضغط لتثبيتي الآن' : 'متاح للسحب والتركيب'}
                           </span>
                         </div>
 
@@ -1443,7 +1930,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             تركيب مباشر ⚡
                           </button>
                         )}
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
@@ -1455,7 +1942,8 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
               </div>
 
             </div>
-          )}
+          </div>
+        )}
 
           {/* 2. BOOTING SCREEN DIAGNOSTICS LOG */}
           {labState === 'booting' && (
@@ -1535,40 +2023,40 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                   </button>
                 </div>
 
-                {/* OS 2: Microsoft Windows */}
+                {/* OS 2: Windows */}
                 <div className="bg-slate-900 border border-indigo-500/20 rounded-3xl p-6 hover:border-blue-500 transition-all duration-300 flex flex-col justify-between space-y-4 group">
                   <div className="space-y-3">
-                    <div className="bg-gradient-to-br from-indigo-700 via-blue-600 to-pink-500 rounded-2xl p-4 flex items-center justify-center text-3xl group-hover:scale-105 duration-200 select-none text-white">
-                      🗔
+                    <div className="bg-slate-950 border border-slate-850 rounded-2xl p-4 flex items-center justify-center text-3xl group-hover:scale-105 duration-200 select-none">
+                      🪟 🇸🇩
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[10px] text-cyan-400 font-extrabold block">بيئة رسومية بديهية (GUI-Windows)</span>
-                      <h4 className="font-extrabold text-white text-base">ميكروسوفت ويندوز Windows 🗔</h4>
+                      <span className="text-[10px] text-cyan-400 font-extrabold block">واجهة المستخدم الرسومية (GUI)</span>
+                      <h4 className="font-extrabold text-white text-base">نظام التشغيل ويندوز Windows 🇸🇩</h4>
                       <p className="text-[11px] text-indigo-300 leading-relaxed font-bold">
-                        أشهر نظام تشغيل رسومي بالعالم. يعتمد على النوافذ، الألوان، والفأرة. يتضمن برامج المفكرة، الآلة الحاسبة، والرسام التفاعلي.
+                        النظام الأكثر انتشاراً. تجربة سودانية كاملة وخلفية علم السودان وتطبيقات وورد وبوربوينت ومتفصح آي بي وحفظ الملفات.
                       </p>
                     </div>
                   </div>
                   
                   <button
                     onClick={() => { playSound('boot'); setLabState('windows'); }}
-                    className="w-full bg-indigo-650 text-white font-black text-xs py-2.5 rounded-xl hover:bg-indigo-500 hover:scale-103 transition"
+                    className="w-full bg-slate-950 border border-indigo-500/40 text-indigo-400 font-black text-xs py-2.5 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-transparent transition"
                   >
                     الإقلاع لنظام Windows ←
                   </button>
                 </div>
 
-                {/* OS 3: GNU/Linux */}
+                {/* OS 3: Linux */}
                 <div className="bg-slate-900 border border-indigo-500/20 rounded-3xl p-6 hover:border-pink-500 transition-all duration-300 flex flex-col justify-between space-y-4 group">
                   <div className="space-y-3">
-                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center justify-center text-3xl group-hover:scale-105 duration-200 select-none">
-                      🍏🐧
+                    <div className="bg-slate-950 border border-slate-850 rounded-2xl p-4 flex items-center justify-center text-3xl group-hover:scale-105 duration-200 select-none">
+                      🐧 🇸🇩
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[10px] text-pink-400 font-extrabold block">بيئة مصادر مفتوحة (Open Source-Shell)</span>
-                      <h4 className="font-extrabold text-white text-base">نظام تشغيل لينكس Linux 🐧</h4>
+                      <span className="text-[10px] text-pink-400 font-extrabold block">قوة المصادر المفتوحة وباش</span>
+                      <h4 className="font-extrabold text-white text-base">خادم الطرفية لينكس GNU/Linux 🐧</h4>
                       <p className="text-[11px] text-indigo-300 leading-relaxed font-bold">
-                        نظام تشغيل رائد وقوي لإدارة سيرفرات الويب والعملاقة الموفرة للأمن والمصادر المفتوحة. تعرف على أوامر الطرفية Bash Shell.
+                        النظام المفتوح المصدر الذي تعتمد عليها السيرفرات والشبكات العالمية الكبرى. يمنحك طرفية تحكم مذهلة!
                       </p>
                     </div>
                   </div>
@@ -1577,7 +2065,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                     onClick={() => { playSound('boot'); setLabState('linux'); }}
                     className="w-full bg-slate-950 border border-pink-500/40 text-pink-400 font-black text-xs py-2.5 rounded-xl hover:bg-pink-600 hover:text-white hover:border-transparent transition"
                   >
-                    الإقلاع لنظام Linux Bash Shell ←
+                    الإقلاع لنظام Linux ←
                   </button>
                 </div>
 
@@ -1585,45 +2073,45 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
             </div>
           )}
 
-          {/* 4. ACTIVE OS ENVIRONMENT SYSTEM: MS-DOS */}
+          {/* 4. ACTIVE OS ENVIRONMENT SYSTEM: DOS */}
           {labState === 'dos' && (
             <div className="space-y-4 animate-fadeIn">
               <div className="flex justify-between items-center bg-slate-900/60 p-3 rounded-2xl border border-indigo-500/10">
                 <button
                   onClick={() => { playSound('click'); setLabState('os_menu'); }}
-                  className="bg-slate-950 border border-indigo-500/30 text-indigo-300 text-xs py-1.5 px-4 rounded-xl font-bold flex items-center gap-1.5 hover:text-white transition"
+                  className="bg-slate-950 border border-indigo-505/30 text-indigo-300 text-xs py-1.5 px-4 rounded-xl font-bold flex items-center gap-1.5 hover:text-white transition"
                 >
                   <ArrowLeft className="w-4 h-4 ml-1" />
-                  <span>العودة لقائمة الأنظمة (OS List)</span>
+                  <span>العودة لقائمة الأنظمة (OS Menu)</span>
                 </button>
                 <div className="text-right">
-                  <span className="text-[10px] text-cyan-400 font-extrabold">بيئة سطر الأوامر DOS</span>
-                  <h4 className="font-extrabold text-white text-xs">Microsoft DOS Terminal Pro</h4>
+                  <span className="text-[10px] text-emerald-400 font-extrabold">موجّه سطر الأوامر الأثري DOS Prompt</span>
+                  <h4 className="font-extrabold text-white text-xs">Virtual MS-DOS Command Simulation</h4>
                 </div>
               </div>
 
-              <div className="bg-black text-emerald-400 p-5 rounded-[25px] font-mono text-xs sm:text-sm text-left h-[330px] overflow-y-auto select-text shadow-inner flex flex-col justify-between border-2 border-slate-700">
-                <div className="space-y-1.5">
+              <div className="bg-black text-emerald-400 p-5 rounded-[25px] font-mono text-xs sm:text-sm text-left h-[330px] overflow-y-auto select-text shadow-xl flex flex-col justify-between border-2 border-emerald-550">
+                <div className="space-y-1 text-left" dir="ltr">
                   {dosConsole.map((line, i) => (
                     <div key={i} className="leading-relaxed whitespace-pre-wrap">{line}</div>
                   ))}
                 </div>
                 
-                <form onSubmit={handleDosSubmit} className="mt-4 flex border-t border-slate-800 pt-2 items-center text-left" dir="ltr">
-                  <span className="text-slate-200 shrink-0 select-none mr-1">C:\&gt;</span>
+                <form onSubmit={handleDosSubmit} className="mt-4 flex border-t border-slate-900 pt-2 items-center text-left" dir="ltr">
+                  <span className="text-emerald-400 font-bold shrink-0 select-none">C:\&gt;</span>
                   <input
                     type="text"
                     value={dosInput}
                     onChange={(e) => setDosInput(e.target.value)}
-                    className="bg-transparent text-emerald-400 border-none outline-none focus:outline-none flex-1 font-mono px-1 border-transparent focus:ring-0 text-left shrink-0"
-                    placeholder="Type HELP and press Enter..."
+                    className="bg-transparent text-emerald-400 border-none outline-none focus:outline-none flex-1 font-mono px-1 border-transparent focus:ring-0 text-left shrink-0 ml-1"
+                    placeholder="Type HELP..."
                     autoFocus
                   />
                 </form>
               </div>
 
               <div className="bg-slate-900 border border-indigo-500/10 p-3.5 rounded-2xl text-[11px] text-indigo-300 text-right leading-relaxed font-bold">
-                💡 <span className="text-cyan-400">تلميح مهارات العتاد:</span> اكتب <span className="font-mono text-white text-[12px] bg-black px-1.5 py-0.5 rounded">NEOFETCH</span> لإظهار معلومات الحاسوب الذي قمت بتجميعه بنفسك، أو اكتب <span className="font-mono text-white text-[12px] bg-black px-1.5 py-0.5 rounded">TYPE LESSON.TXT</span> لمراجعة شرح لوحة الأم!
+                💾 <span className="text-emerald-400">تلميح الدرس:</span> جرب كتابة الأمر <span className="font-mono text-white text-[12px] bg-slate-950 px-1.5 py-0.5 rounded">HELP</span> لعرض كافة التعليمات المدعومة بالنظام، أو جرب <span className="font-mono text-white text-[12px] bg-slate-950 px-1.5 py-0.5 rounded">VER</span> لمعرفة إصدار نظام التشغيل!
               </div>
             </div>
           )}
@@ -1646,238 +2134,784 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                 <div className="flex items-center gap-2 text-xs text-white">
                   <span className="text-[10px] text-indigo-300 font-bold">تغيير الخلفية:</span>
                   <button 
+                    onClick={() => { playSound('click'); setWinWallpaper('sudan'); }}
+                    className={`w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-white to-green-600 border ${winWallpaper === 'sudan' ? 'border-white scale-125' : 'border-slate-800'}`}
+                    title="الخلفية السودانية القومية"
+                  />
+                  <button 
                     onClick={() => { playSound('click'); setWinWallpaper('aurora'); }}
                     className={`w-4 h-4 rounded-full bg-gradient-to-r from-blue-400 to-pink-500 border ${winWallpaper === 'aurora' ? 'border-white scale-125' : 'border-slate-800'}`}
+                    title="الشفق القطبي"
                   />
                   <button 
                     onClick={() => { playSound('click'); setWinWallpaper('cyber'); }}
                     className={`w-4 h-4 rounded-full bg-gradient-to-r from-purple-800 to-slate-900 border ${winWallpaper === 'cyber' ? 'border-white scale-125' : 'border-slate-800'}`}
+                    title="السايبر الشرير"
                   />
                   <button 
                     onClick={() => { playSound('click'); setWinWallpaper('nile'); }}
                     className={`w-4 h-4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-800 border ${winWallpaper === 'nile' ? 'border-white scale-125' : 'border-slate-800'}`}
+                    title="مقرن النيلين بالخرطوم"
                   />
                 </div>
               </div>
 
               {/* Windows desktop screen */}
-              <div className={`rounded-[30px] border-4 border-slate-800 min-h-[420px] relative flex flex-col justify-between overflow-hidden p-4 select-none ${getWallpaperClasses()}`}>
+              <div className={`rounded-[30px] border-4 border-slate-800 min-h-[460px] relative flex flex-col justify-between overflow-hidden p-4 select-none transition-all ${getWallpaperClasses()}`}>
                 
-                {/* Icons Grid on desktop */}
-                <div className="flex flex-col gap-5 text-center items-start justify-start z-10 p-2 text-white font-extrabold text-[10px]" dir="ltr">
-                  
-                  {/* File icon: Notepad */}
-                  <button 
-                    onClick={() => { playSound('click'); setWinOpenApp('notepad'); }}
-                    className="flex flex-col items-center bg-white/5 hover:bg-white/15 active:scale-95 transition-all p-2 rounded-2xl w-16"
-                  >
-                    <FileText className="w-8 h-8 text-blue-200" />
-                    <span className="mt-1 font-bold line-clamp-1 drop-shadow-md">المفكرة</span>
-                  </button>
+                {!winLoggedIn ? (
+                  /* 1. Windows Login Screen (Sudanese Theme) */
+                  <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col justify-center items-center p-4 z-30 font-bold" dir="rtl">
+                    <div className="w-full max-w-sm bg-slate-900/90 border-2 border-indigo-500/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between space-y-4">
+                      
+                      {/* Sudan Flag Motif indicator at the top */}
+                      <div className="absolute top-0 inset-x-0 h-1.5 flex" dir="ltr">
+                        <div className="w-1/3 bg-red-650" />
+                        <div className="w-1/3 bg-white" />
+                        <div className="w-1/3 bg-black" />
+                      </div>
+                      
+                      <div className="text-center space-y-1">
+                        <div className="flex justify-center items-center gap-1.5">
+                          <span className="text-2xl">🇸🇩</span>
+                          <span className="text-base text-white font-extrabold">بوابة لوحة التجربة الأمنية</span>
+                        </div>
+                        <p className="text-[9px] text-zinc-400">وزارة التربية والتعليم - المنهج الرقمي القومي السوداني</p>
+                      </div>
 
-                  {/* Calculator icon */}
-                  <button 
-                    onClick={() => { playSound('click'); setWinOpenApp('calculator'); }}
-                    className="flex flex-col items-center bg-white/5 hover:bg-white/15 active:scale-95 transition-all p-2 rounded-2xl w-16 mt-1"
-                  >
-                    <Calculator className="w-8 h-8 text-amber-200" />
-                    <span className="mt-1 font-bold line-clamp-1 drop-shadow-md">الحاسبة</span>
-                  </button>
+                      {/* Pyramids of Meroe emblem background */}
+                      <div className="bg-slate-950/70 p-3 rounded-2xl border border-indigo-500/10 flex items-center gap-2.5 text-right">
+                        <div className="text-lg">🏕️</div>
+                        <div className="leading-tight">
+                          <span className="text-[10px] text-cyan-300 block">مرشد الصف السادس الحاسوبية:</span>
+                          <span className="text-[9px] text-zinc-300">أمام هرم البجراوية ومع مياه النيل الخالدة، نلج لعالم البرمجيات!</span>
+                        </div>
+                      </div>
 
-                  {/* Paint icon */}
-                  <button 
-                    onClick={() => { playSound('click'); setWinOpenApp('paint'); }}
-                    className="flex flex-col items-center bg-white/5 hover:bg-white/15 active:scale-95 transition-all p-2 rounded-2xl w-16 mt-1"
-                  >
-                    <Palette className="w-8 h-8 text-pink-300 animate-pulse" />
-                    <span className="mt-1 font-bold line-clamp-1 drop-shadow-md">الرسام</span>
-                  </button>
-                </div>
+                      {/* Login Form Inputs */}
+                      <div className="space-y-3 text-right">
+                        <div>
+                          <label className="text-[10px] text-zinc-300 block mb-1">اسم مستخدم الطالب المقيد:</label>
+                          <input 
+                            type="text" 
+                            disabled 
+                            value="student" 
+                            className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 text-xs rounded-xl p-2 font-mono"
+                          />
+                        </div>
 
-                {/* Simulated Floating Windows App */}
-                {winOpenApp !== 'none' && (
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-2xl border border-slate-300 z-20 overflow-hidden text-right animate-fadeIn" dir="rtl">
+                        <div>
+                          <label className="text-[10px] text-zinc-300 block mb-1">كلمة مرور النظام المدرسي:</label>
+                          <div className="relative">
+                            <input 
+                              type="password" 
+                              value={winPassword}
+                              onChange={(e) => setWinPassword(e.target.value)}
+                              placeholder="أدخل كلمة المرور لدخول الديسكتوب..."
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  if (winPassword.toLowerCase() === 'sudan') {
+                                    playSound('success');
+                                    setWinLoggedIn(true);
+                                    setWinLoginError('');
+                                    speakPhrase('تمت المصادقة الأمنية، أهلاً بك في نظام ويندوز السوداني التعليمي المتكامل.');
+                                  } else {
+                                    playSound('fail');
+                                    setWinLoginError('❌ كلمة المرور خاطئة، يرجى قراءة التلميح بالأسفل!');
+                                  }
+                                }
+                              }}
+                              className="w-full bg-[#070b13] border border-slate-700 text-cyan-400 text-xs rounded-xl p-2 font-bold placeholder:text-zinc-650 placeholder:font-normal focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {winLoginError && (
+                          <div className="text-[9px] text-rose-400 bg-rose-950/30 p-2 rounded-lg leading-snug text-center border border-rose-900/40">
+                            {winLoginError}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Login and Hint buttons */}
+                      <div className="flex gap-2 text-xs">
+                        <button
+                          onClick={() => {
+                            if (winPassword.toLowerCase() === 'sudan') {
+                              playSound('success');
+                              setWinLoggedIn(true);
+                              setWinLoginError('');
+                              speakPhrase('تمت المصادقة الأمنية، أهلاً بك في نظام ويندوز السوداني التعليمي المتكامل.');
+                            } else {
+                              playSound('fail');
+                              setWinLoginError('❌ كلمة المرور خاطئة، يرجى قراءة التلميح بالأسفل!');
+                            }
+                          }}
+                          className="flex-1 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white font-black py-2 rounded-xl transition shadow active:scale-95 cursor-pointer text-center"
+                        >
+                          دخول آمن بالنظام 🔓
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => { playSound('click'); setWinShowHint(!winShowHint); }}
+                          className="bg-slate-950 text-indigo-300 border border-indigo-500/20 px-2.5 rounded-xl text-[10px] whitespace-nowrap active:scale-95 cursor-pointer"
+                        >
+                          {winShowHint ? 'إخفاء التلميح 💡' : 'إظهار التلميح 💡'}
+                        </button>
+                      </div>
+
+                      {/* Active hint box */}
+                      {winShowHint && (
+                        <div className="p-2.5 bg-yellow-950/40 border border-yellow-700/30 text-[9px] text-yellow-300 rounded-xl leading-relaxed text-right animate-fadeIn">
+                          💡 <span className="font-extrabold">تلميح المعلم عثمان:</span> كلمة المرور هي اسم بلدنا الغالي بحروف صغيرة باللغة الإنجليزية: <span className="font-mono bg-black text-white px-1 py-0.5 rounded text-[10px] ml-0.5 select-text">sudan</span>
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+                ) : (
+                  /* 2. Logged-in Desktop Environment and Apps */
+                  <div className="absolute inset-0 flex flex-col justify-between" dir="rtl">
                     
-                    {/* App Bar title */}
-                    <div className="bg-slate-100 px-4 py-2 flex justify-between items-center text-slate-800 font-extrabold border-b">
-                      <div className="flex items-center gap-1.5 text-xs">
-                        {winOpenApp === 'notepad' && <FileText className="w-4 h-4 text-blue-605" />}
-                        {winOpenApp === 'calculator' && <Calculator className="w-4 h-4 text-amber-605" />}
-                        {winOpenApp === 'paint' && <Palette className="w-4 h-4 text-pink-505" />}
-                        <span>
-                          {winOpenApp === 'notepad' && 'برنامج المفكرة (Notepad)'}
-                          {winOpenApp === 'calculator' && 'الآلة الحاسبة التعليمية (Calculator)'}
-                          {winOpenApp === 'paint' && 'برنامج الرسام المدرسي (Paint 3D Grid)'}
+                    {/* Desktop Workspace body */}
+                    <div className="relative flex-1 flex items-start justify-between p-2">
+                      
+                      {/* Icons Column Checklist */}
+                      <div className="flex flex-col flex-wrap h-[340px] gap-2 text-center items-start justify-start z-10 p-1 text-white font-extrabold text-[8.5px]" dir="ltr">
+                        
+                        {/* App 1: Notepad */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('notepad'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-indigo-950/40 p-1 rounded-xl w-14 transition ${winOpenApp === 'notepad' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <FileText className="w-6 h-6 text-blue-200" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">المفكرة</span>
+                        </button>
+
+                        {/* App 2: Calculator */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('calculator'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-indigo-950/40 p-1 rounded-xl w-14 transition ${winOpenApp === 'calculator' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <Calculator className="w-6 h-6 text-amber-200" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">الحاسبة</span>
+                        </button>
+
+                        {/* App 3: Paint Grid */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('paint'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-indigo-950/40 p-1 rounded-xl w-14 transition ${winOpenApp === 'paint' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <Palette className="w-6 h-6 text-rose-300" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">الرسام</span>
+                        </button>
+
+                        {/* App 4: Word (New) */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('word'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-indigo-950/40 p-1 rounded-xl w-14 transition ${winOpenApp === 'word' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <FileText className="w-6 h-6 text-emerald-300" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">المستندات</span>
+                        </button>
+
+                        {/* App 5: Powerpoint (New) */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('powerpoint'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-slate-900/45 p-1 rounded-xl w-14 transition ${winOpenApp === 'powerpoint' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <Grid className="w-6 h-6 text-orange-400" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">بوربوينت</span>
+                        </button>
+
+                        {/* App 6: Browser (New) */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('browser'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-slate-900/45 p-1 rounded-xl w-14 transition ${winOpenApp === 'browser' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <Monitor className="w-6 h-6 text-cyan-300" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">المتصفح</span>
+                        </button>
+
+                        {/* App 7: File Explorer (New) */}
+                        <button 
+                          onClick={() => { playSound('click'); setWinOpenApp('files'); setWinMinimized(false); }}
+                          className={`flex flex-col items-center bg-white/5 hover:bg-slate-900/45 p-1 rounded-xl w-14 transition ${winOpenApp === 'files' ? 'ring-1 ring-cyan-400 bg-indigo-950/50' : ''}`}
+                        >
+                          <Folder className="w-6 h-6 text-yellow-300" />
+                          <span className="mt-1 font-bold whitespace-nowrap overflow-ellipsis overflow-hidden drop-shadow-md">الملفات</span>
+                        </button>
+
+                      </div>
+
+                      {/* Simulated Window Frame - responds to minimized/maximized state */}
+                      {winOpenApp !== 'none' && !winMinimized && (
+                        <div className={`absolute bg-white rounded-2xl shadow-2xl border border-slate-300 z-20 overflow-hidden text-right animate-fadeIn flex flex-col transition-all duration-200 ${
+                          winMaximized 
+                            ? 'inset-x-1 top-1 bottom-10 max-w-none rounded-none border-t-0 p-0' 
+                            : 'top-[3%] left-1/2 -translate-x-1/2 w-full max-w-xs sm:max-w-md'
+                        }`} dir="rtl">
+                          
+                          {/* Titlebar header with operating system dot controls */}
+                          <div className="bg-slate-100 p-2 border-b flex justify-between items-center text-slate-800 font-extrabold">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              {winOpenApp === 'notepad' && <FileText className="w-3.5 h-3.5 text-blue-600" />}
+                              {winOpenApp === 'calculator' && <Calculator className="w-3.5 h-3.5 text-amber-550" />}
+                              {winOpenApp === 'paint' && <Palette className="w-3.5 h-3.5 text-pink-600" />}
+                              {winOpenApp === 'word' && <FileText className="w-3.5 h-3.5 text-emerald-600" />}
+                              {winOpenApp === 'powerpoint' && <Grid className="w-3.5 h-3.5 text-orange-500" />}
+                              {winOpenApp === 'browser' && <Monitor className="w-3.5 h-3.5 text-cyan-600" />}
+                              {winOpenApp === 'files' && <Folder className="w-3.5 h-3.5 text-yellow-500" />}
+                              <span className="text-[10px] sm:text-xs">
+                                {winOpenApp === 'notepad' && 'المفكرة النصية (Notepad)'}
+                                {winOpenApp === 'calculator' && 'الآلة الحاسبة التعليمية (Calculator)'}
+                                {winOpenApp === 'paint' && 'برنامج الرسام المدرسي (Paint 3D)'}
+                                {winOpenApp === 'word' && 'معالج النصوص المتطور (Word .doc)'}
+                                {winOpenApp === 'powerpoint' && 'مستعرض العلوم والعروض التقديمية (PowerPoint)'}
+                                {winOpenApp === 'browser' && 'متصفح الإنترنت المدرسي (Web Browser)'}
+                                {winOpenApp === 'files' && 'مستعرض الملفات والمستندات (File Explorer)'}
+                              </span>
+                            </div>
+                            
+                            {/* Window controls: ➖ ◻ ✕ */}
+                            <div className="flex items-center gap-1.5">
+                              {/* 1. Minimise */}
+                              <button 
+                                onClick={() => { playSound('click'); setWinMinimized(true); }}
+                                className="w-4 h-4 bg-amber-100 text-amber-700 font-black hover:bg-amber-400 hover:text-white rounded-full flex items-center justify-center text-[8px]"
+                                title="تصغير النافذة"
+                              >
+                                ➖
+                              </button>
+
+                              {/* 2. Maximise */}
+                              <button 
+                                onClick={() => { playSound('click'); setWinMaximized(!winMaximized); }}
+                                className="w-4 h-4 bg-emerald-100 text-emerald-700 font-black hover:bg-emerald-400 hover:text-white rounded-full flex items-center justify-center text-[7px]"
+                                title="تكبير النافذة"
+                              >
+                                ◻
+                              </button>
+
+                              {/* 3. Close */}
+                              <button 
+                                onClick={() => { playSound('laser'); setWinOpenApp('none'); setWinMaximized(false); setWinMinimized(false); }}
+                                className="w-4 h-4 bg-rose-100 text-rose-700 font-black hover:bg-rose-500 hover:text-white rounded-full flex items-center justify-center text-[8px]"
+                                title="إغلاق النافذة"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* App Window main layout contents */}
+                          <div className="p-3 sm:p-4 text-slate-800 flex-1 overflow-y-auto">
+                            
+                            {/* notepad view */}
+                            {winOpenApp === 'notepad' && (
+                              <div className="space-y-3 font-semibold text-right">
+                                <textarea
+                                  className="w-full bg-slate-50 border p-2.5 rounded-xl text-xs h-32 focus:ring-1 focus:ring-blue-500 focus:outline-none font-bold"
+                                  value={notepadText}
+                                  onChange={(e) => setNotepadText(e.target.value)}
+                                />
+                                <div className="flex gap-2 justify-end">
+                                  <button
+                                    onClick={handleSaveNotepad}
+                                    className="bg-blue-600 text-white font-extrabold text-[10px] px-3.5 py-1.5 rounded-xl hover:bg-blue-500 transition shadow flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                    <span>حفظ بالنواة الافتراضية 💾</span>
+                                  </button>
+                                </div>
+                                {savedNotepads && (
+                                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded-xl">
+                                    📂 <span className="font-extrabold">المستند النشط المحفوظ:</span> "{savedNotepads}"
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* calculator view */}
+                            {winOpenApp === 'calculator' && (
+                              <div className="max-w-[240px] mx-auto bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-3 font-semibold">
+                                <div className="bg-slate-900 text-white p-3 rounded-xl font-mono text-right text-sm font-extrabold">
+                                  <div className="text-[10px] text-slate-400 h-4 leading-none mb-1">{calcFormula}</div>
+                                  <div>{calcDisplay}</div>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1.5 text-xs font-black">
+                                  {['C', '←', '÷', '×', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '=', '0'].map((btn) => (
+                                    <button
+                                      key={btn}
+                                      onClick={() => runCalcAction(btn)}
+                                      className={`py-2 rounded-lg transition text-center text-xs active:scale-95 ${
+                                        btn === '=' ? 'bg-indigo-600 text-white hover:bg-indigo-500 col-span-2' :
+                                        ['C', '←', '÷', '×', '-', '+'].includes(btn) ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' :
+                                        'bg-white text-slate-800 border hover:bg-slate-100 shadow-sm'
+                                      }`}
+                                    >
+                                      {btn}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* paint view */}
+                            {winOpenApp === 'paint' && (
+                              <div className="space-y-3 text-center font-semibold text-xs text-slate-700">
+                                <p className="text-[9px] leading-snug">🎨 اختر لوحة ألوان وبكسل لتزيين عتاد الصف السادس المجمع!</p>
+                                <div className="flex gap-2 justify-center items-center">
+                                  {['#3b82f6', '#10b981', '#f43f5e', '#eab308', '#a855f7', '#0f172a'].map((col) => (
+                                    <button
+                                      key={col}
+                                      onClick={() => { playSound('click'); setPaintSelectedColor(col); }}
+                                      className={`w-5 h-5 rounded-full transition-all border-2 ${paintSelectedColor === col ? 'border-slate-800 scale-125' : 'border-transparent'}`}
+                                      style={{ backgroundColor: col }}
+                                    />
+                                  ))}
+                                  <button
+                                    onClick={() => setPaintGrid(Array(12).fill(null).map(() => Array(12).fill('#ffffff')))}
+                                    className="bg-slate-150 text-[9px] border px-2 py-0.5 rounded-md text-rose-600 shrink-0 font-extrabold cursor-pointer"
+                                  >
+                                    مسح اللوحة
+                                  </button>
+                                </div>
+                                <div className="border inline-block p-1 bg-slate-50 rounded-xl">
+                                  <div className="grid grid-cols-12 gap-0.5" style={{ width: '144px', height: '144px' }}>
+                                    {paintGrid.map((row, rIdx) => 
+                                      row.map((cellColor, cIdx) => (
+                                        <div
+                                          key={`${rIdx}-${cIdx}`}
+                                          onClick={() => {
+                                            playSound('success');
+                                            const newGrid = [...paintGrid];
+                                            newGrid[rIdx][cIdx] = paintSelectedColor;
+                                            setPaintGrid(newGrid);
+                                          }}
+                                          className="w-3 h-3 hover:opacity-80 transition cursor-pointer"
+                                          style={{ backgroundColor: cellColor }}
+                                        />
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* App 4: Word Editor (New) */}
+                            {winOpenApp === 'word' && (
+                              <div className="space-y-3 text-right">
+                                <div>
+                                  <label className="text-[10px] text-zinc-500 font-extrabold block mb-0.5">اسم المستند التعليمي (.doc):</label>
+                                  <input 
+                                    type="text" 
+                                    value={wordDocumentName}
+                                    onChange={(e) => setWordDocumentName(e.target.value)}
+                                    className="w-full bg-slate-50 border p-2 rounded-xl text-xs font-bold"
+                                    placeholder="اكتب اسم المستند..."
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <label className="text-[10px] text-zinc-500 font-extrabold block mb-0.5">محتويات معالج النصوص الأساسي:</label>
+                                  <textarea
+                                    value={wordContentText}
+                                    onChange={(e) => setWordContentText(e.target.value)}
+                                    className="w-full bg-slate-50 border p-2.5 rounded-xl text-xs h-28 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                                    placeholder="اكتب نصوص الدرس ومذكرات المنهج هنا..."
+                                  />
+                                </div>
+
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[9px] text-slate-400 font-extrabold italic">✓ معالج نصوص كتاب الحاسوب والاتصالات</span>
+                                  <button
+                                    onClick={() => {
+                                      playSound('success');
+                                      const cleanName = wordDocumentName.endsWith('.doc') ? wordDocumentName : `${wordDocumentName}.doc`;
+                                      
+                                      // Append to savedFiles state
+                                      setSavedFiles(prev => {
+                                        const filtered = prev.filter(f => f.name !== cleanName);
+                                        return [...filtered, { name: cleanName, content: wordContentText, type: 'word' }];
+                                      });
+                                      
+                                      onEmitPoints(5);
+                                      speakPhrase(`تم حفظ مستند وورد التعليمي ${cleanName} بنجاح في نظام تخزين النواقل بالقرص الصلب!`);
+                                      alert(`🎉 تم حفظ الملف "${cleanName}" بنجاح فلاشة العتاد!\nتم منحه ميزة تخزين الفئات بنجاح في مجلد المستندات.`);
+                                    }}
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-4 py-2 rounded-xl transition flex items-center gap-1 cursor-pointer active:scale-95 shadow"
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                    <span>حفظ وتخزين الملف 💾</span>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* App 5: PowerPoint Slideshow (New) */}
+                            {winOpenApp === 'powerpoint' && (
+                              <div className="space-y-3 text-right">
+                                
+                                {/* Slide container frame */}
+                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-inner min-h-[160px] flex flex-col justify-between relative">
+                                  
+                                  {/* Slide background Sudanese graphic seal watermark */}
+                                  <div className="absolute right-3.5 bottom-3 text-2xl opacity-15">🇸🇩</div>
+                                  
+                                  {/* Render active slide content */}
+                                  {pptCurrentSlide === 0 && (
+                                    <div className="space-y-2 animate-fadeIn">
+                                      <h4 className="text-xs sm:text-sm font-extrabold text-orange-600 flex items-center gap-1 border-b pb-1">
+                                        <span>الشريحة الأولى: أساسيات الحاسوب (الصف السادس)</span>
+                                      </h4>
+                                      <ul className="text-[10px] sm:text-xs text-slate-800 space-y-1.5 leading-relaxed font-bold">
+                                        <li>• <span className="text-indigo-600">تعريف الحاسوب:</span> جهاز إلكتروني يستقبل مدخلات البيانات ويعالجها ليعطيك مخرجات ومعلومات دقيقة وسريعة.</li>
+                                        <li>• <span className="text-zinc-500">شقين أساسيين:</span> كيان مادي فيزيائي يسمى العتاد (Hardware) وكيان برمجي خفي يسمى برامج التشغيل (Software).</li>
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {pptCurrentSlide === 1 && (
+                                    <div className="space-y-2 animate-fadeIn">
+                                      <h4 className="text-xs sm:text-sm font-extrabold text-orange-600 flex items-center gap-1 border-b pb-1">
+                                        <span>الشريحة الثانية: اللوحة الأم كعمود فقري للقطع</span>
+                                      </h4>
+                                      <ul className="text-[10px] sm:text-xs text-slate-800 space-y-1.5 leading-relaxed font-bold">
+                                        <li>• <span className="text-rose-500">اللوحة الأم (Motherboard):</span> اللوحة الإلكترونية الحاضنة لجميع مفاصل الحاسوب.</li>
+                                        <li>• <span className="text-blue-500">خطوط التوصيل:</span> هي قنوات دقيقة على المذربورد لتنظيم تدفق الطاقة ونبضات البيانات بين المعالج والأقراص والذاكرة العشوائية.</li>
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {pptCurrentSlide === 2 && (
+                                    <div className="space-y-2 animate-fadeIn">
+                                      <h4 className="text-xs sm:text-sm font-extrabold text-orange-600 flex items-center gap-1 border-b pb-1">
+                                        <span>الشريحة الثالثة: أنظمة التشغيل (OS) والولوج الرسومي</span>
+                                      </h4>
+                                      <ul className="text-[10px] sm:text-xs text-slate-800 space-y-1.5 leading-relaxed font-bold">
+                                        <li>• <span className="text-teal-600">وظيفة الـ OS:</span> الوسيط العبقري المنظم الذي يشغل التطبيقات الخدمية ويوفر الواجهات الرسومية ذات الألوان والأزرار المريحة.</li>
+                                        <li>• <span className="text-purple-600">أمثلة مقررة:</span> أنظمة الأوامر النصية البسيطة (DOS) مقابل أنظمة التوجيه الرسومية البديهية الشاملة (Windows).</li>
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {pptCurrentSlide === 3 && (
+                                    <div className="space-y-2 animate-fadeIn">
+                                      <h4 className="text-xs sm:text-sm font-extrabold text-orange-600 flex items-center gap-1 border-b pb-1">
+                                        <span>الشريحة الرابعة: شبكة المعلومات وعناوين IP</span>
+                                      </h4>
+                                      <ul className="text-[10px] sm:text-xs text-slate-800 space-y-1.5 leading-relaxed font-bold">
+                                        <li>• <span className="text-indigo-600">عنوان بروتوكول الإنترنت IP:</span> المعرّف الرقمي الخاص بأي حاسوب أو طابعة على شبكات المعمل المشتركة.</li>
+                                        <li>• <span className="text-emerald-600">أمن الحفظ:</span> الضغط المستمر على أزرار الحفظ (Notepad Notepad / Word Saving) يقيك شر انقطاع الطاقة المفاجئ وضياع جهودك.</li>
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  <div className="text-left text-[9px] text-zinc-400 font-extrabold pt-2 border-t mt-3 flex justify-between">
+                                    <span>المجموع التراكمي للمشاهدة: +10 XP</span>
+                                    <span>برنامج PowerPoint المدرسي</span>
+                                  </div>
+                                </div>
+
+                                {/* Slides toggler buttons */}
+                                <div className="flex justify-between items-center">
+                                  <button
+                                    disabled={pptCurrentSlide === 0}
+                                    onClick={() => { playSound('click'); setPptCurrentSlide(prev => Math.max(0, prev - 1)); }}
+                                    className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black border transition ${pptCurrentSlide === 0 ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-100 text-slate-800 active:scale-95'}`}
+                                  >
+                                    ◀ الشريحة السابقة
+                                  </button>
+                                  
+                                  <span className="text-[10px] text-slate-500 font-extrabold">الشريحة {pptCurrentSlide + 1} من أصل 4</span>
+                                  
+                                  <button
+                                    disabled={pptCurrentSlide === 3}
+                                    onClick={() => { playSound('click'); setPptCurrentSlide(prev => Math.min(3, prev + 1)); }}
+                                    className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black border transition ${pptCurrentSlide === 3 ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-100 text-slate-800 active:scale-95'}`}
+                                  >
+                                    الشريحة التالية ▶
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* App 6: Web Browser with address / IP enter (New) */}
+                            {winOpenApp === 'browser' && (
+                              <div className="space-y-3 text-right">
+                                
+                                {/* Address / IP entering Bar */}
+                                <div className="flex gap-2 items-center" dir="ltr">
+                                  <div className="bg-slate-150 p-1 px-2 rounded-lg text-xs font-black select-none border">🌐 Browser</div>
+                                  <input 
+                                    type="text"
+                                    value={browserUrl}
+                                    onChange={(e) => setBrowserUrl(e.target.value)}
+                                    placeholder="Enter IP (e.g. 192.168.1.1) or web address..."
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        playSound('click');
+                                      }
+                                    }}
+                                    className="flex-1 bg-slate-50 border p-1 rounded-xl text-xs font-mono font-black border-slate-350 outline-none focus:ring-1 focus:ring-cyan-500 text-left"
+                                  />
+                                  <button
+                                    onClick={() => playSound('click')}
+                                    className="bg-cyan-650 text-white text-[10px] font-black px-3.5 py-1.5 rounded-xl cursor-pointer active:scale-95 transition"
+                                  >
+                                    Go 🌐
+                                  </button>
+                                </div>
+
+                                {/* Simulated Browser Canvas Frame */}
+                                <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 shadow-inner min-h-[190px] text-zinc-900 overflow-y-auto">
+                                  
+                                  {/* Case 1: IP Router Config Gateway Page 192.168.1.1 */}
+                                  {browserUrl === '192.168.1.1' ? (
+                                    <div className="space-y-2 animate-fadeIn text-right">
+                                      <div className="bg-indigo-600 text-white p-2 rounded-xl text-center font-extrabold text-[11px] flex justify-between items-center mb-2">
+                                        <span>بوابة التحكم بالراوتر اللاسلكي</span>
+                                        <span className="text-[9px] bg-indigo-805 px-1.5 py-0.5 rounded">V6.0-SUNDAN-ICT</span>
+                                      </div>
+                                      <p className="text-[10px] text-zinc-500 font-bold block mb-1">تمت الاستجابة للعنوان المحدد: <span className="font-mono text-zinc-800 bg-zinc-200 px-1 py-0.2 rounded text-[11.5px]">192.168.1.1 (Gateway IP)</span></p>
+                                      
+                                      <div className="grid grid-cols-2 gap-2 text-[9.5px] font-bold text-slate-800">
+                                        <div className="border p-2 bg-white rounded-lg">
+                                          <span className="text-indigo-600 block text-[9.5px]">حالة الاتصال بالإنترنت (WAN):</span>
+                                          <span className="text-emerald-600">● متّصل (NileFiber Active)</span>
+                                        </div>
+                                        <div className="border p-2 bg-white rounded-lg">
+                                          <span className="text-indigo-600 block text-[9.5px]">بروتوكول DHCP للشبكة:</span>
+                                          <span className="text-zinc-600">مفعّل (يوزع الآي بي تلقائياً)</span>
+                                        </div>
+                                      </div>
+
+                                      <div className="p-2.5 bg-yellow-50 border border-yellow-250 text-[10px] rounded-xl text-yellow-800 leading-snug">
+                                        📚 <span className="font-extrabold">من كتيب الحاسوب للصف السادس:</span> نلاحظ عبر إعدادات الموجه المنزلي أن الأجهزة الموصلة تأخذ عنواناً رقمياً فريداً لتبادل حزم البيانات دون تعارض بالشبكة المحلية.
+                                      </div>
+                                    </div>
+                                  ) : 
+                                  
+                                  /* Case 2: School Digital server library 192.168.1.10 */
+                                  browserUrl === '192.168.1.10' ? (
+                                    <div className="space-y-2.5 animate-fadeIn text-right">
+                                      <div className="bg-cyan-600 text-white p-2 rounded-xl text-center font-extrabold text-[11.5px] flex justify-between items-center mb-1">
+                                        <span>🏛️ المخزن الرقمي لشبكة مدرسة الخرطوم الابتدائية</span>
+                                        <span className="text-[9px] bg-cyan-755 px-1.5 py-0.5 rounded">شابك</span>
+                                      </div>
+                                      <p className="text-[10px] text-zinc-500 font-semibold leading-tight">العنوان المطلوب متاح داخلياً: <span className="font-mono text-slate-800 bg-slate-200 px-1 py-0.2 rounded text-[11.5px]">192.168.1.10 (School Intranet Host)</span></p>
+                                      
+                                      <div className="space-y-1.5 text-[10.5px] font-bold">
+                                        <div className="border p-2 bg-white rounded-xl flex justify-between items-center hover:bg-slate-50 transition">
+                                          <span>📖 تحميل كتيب الصف السادس حاسوب كاملاً (PDF)</span>
+                                          <span className="text-indigo-650 hover:underline cursor-pointer">تحميل مستند 📥</span>
+                                        </div>
+                                        <div className="border p-2 bg-white rounded-xl flex justify-between items-center hover:bg-slate-50 transition">
+                                          <span>📊 تجميعة المعلم عثمان: ملخص الأسئلة والامتحانات المقررة</span>
+                                          <span className="text-indigo-650 hover:underline cursor-pointer">تحميل 📄</span>
+                                        </div>
+                                      </div>
+
+                                      <p className="text-[9px] text-zinc-400 italic">سيرفر المدرسة الداخلي يعمل بمصادقة ألياف النيل التعليمية بنسبة 100%.</p>
+                                    </div>
+                                  ) :
+
+                                  /* Case 3: Shared Printer server 192.168.10.5 */
+                                  browserUrl === '192.168.10.5' ? (
+                                    <div className="space-y-2 animate-fadeIn text-right text-[10.5px] font-bold text-slate-800">
+                                      <div className="bg-amber-600 text-white p-2 rounded-xl text-center font-black mb-1">🖨️ بوابة إدارة خادم الطابعة المشتركة للمعمل</div>
+                                      <p className="text-[10px] text-zinc-500">عنوان الطابعة الفرعي: <span className="font-mono bg-zinc-200 text-zinc-800 px-1 py-0.2 rounded">192.168.10.5</span></p>
+                                      <div className="border p-3 bg-white rounded-xl space-y-1 text-right leading-relaxed shadow-sm">
+                                        <p>🔌 <span className="text-indigo-600">موديل الطابعة:</span> Sudan-Shield Network Pro v50</p>
+                                        <p>🟢 <span className="text-emerald-600">الحالة العامة:</span> خمول - بانتظار إرسال الأوراق</p>
+                                        <p>📑 <span className="text-slate-500">قائمة المهام:</span> لا توجد مستندات بانتظار الطبع حالياً</p>
+                                      </div>
+                                    </div>
+                                  ) :
+
+                                  /* Case 4: portal sudan-edu.net */
+                                  browserUrl.includes('sudan-edu.net') ? (
+                                    <div className="space-y-3.5 animate-fadeIn text-right text-zinc-800">
+                                      <div className="bg-gradient-to-r from-red-600 to-green-600 text-white p-3 rounded-2xl text-center shadow-md">
+                                        <span className="block text-xs font-black">🇸🇩 البوابة والمنصة التعليمية القومية لجمهورية السودان</span>
+                                        <span className="text-[9px] text-white/80 block mt-0.5">ترشيد تكنولوجي من أجل أجيال السودان المشرقة</span>
+                                      </div>
+                                      
+                                      <p className="text-[10.5px] leading-relaxed font-semibold">
+                                        تعد هذه المنصة هي الموجه الوطني لتنزيل الكتب المدرسية والتعاميم الوزارية لجميع الصفوف، خاصة منهج تكنولوجيا المعلومات والاتصالات الحديث الموجه لمدارس السودان.
+                                      </p>
+
+                                      <div className="p-2 bg-zinc-150 rounded-xl text-[9px] text-zinc-500 flex justify-between items-center">
+                                        <span>نطاق الوصول معتمد وحاصل على وثيقة الأمان الرقمية.</span>
+                                        <span className="font-mono text-zinc-700">HTTP/2 Secure SSL</span>
+                                      </div>
+                                    </div>
+                                  ) :
+
+                                  /* Generic Default Case */
+                                  (
+                                    <div className="space-y-2 text-right">
+                                      <h5 className="font-extrabold text-xs text-indigo-700 flex items-center gap-1">
+                                        <span>🔍 محرك البحث التربوي للمعمل: الاتصالات والشبكة</span>
+                                      </h5>
+                                      <p className="text-[10.5px] leading-relaxed font-semibold text-slate-700">
+                                        يرجو معالج المتصفح التوضيح بأن العناوين المعملية تتصل ببروتوكولات الإنترنت المسماة بـ IP Addresses. 
+                                      </p>
+                                      
+                                      <div className="bg-slate-100 p-2 text-[9.5px] text-zinc-500 rounded-xl leading-relaxed font-bold border-l-4 border-cyan-400">
+                                        📌 <span className="text-cyan-600 font-extrabold">جرب إدخال العناوين التالية للوصول لمواقع المعمل:</span>
+                                        <ul className="list-disc pr-3.5 mt-1 space-y-0.5 select-text">
+                                          <li>إدخال <span className="font-mono text-cyan-605">192.168.1.1</span> للولوج لبوابة جهاز الراوتر المنزلي.</li>
+                                          <li>إدخال <span className="font-mono text-cyan-605">192.168.1.10</span> للولوج للمخزن والكتب بسيرفر كتاب الحاسوب.</li>
+                                          <li>إدخال <span className="font-mono text-cyan-605">192.168.10.5</span> لرؤية خادم طابعة الشبكة المشتركة.</li>
+                                          <li>كتابة العنوان <span className="font-mono text-emerald-605">sudan-edu.net</span> لفتح منصة وزارة التربية والتعليم الوطنية.</li>
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                </div>
+                              </div>
+                            )}
+
+                            {/* App 7: Files Explorer database (New) */}
+                            {winOpenApp === 'files' && (
+                              <div className="space-y-3 text-right">
+                                <h5 className="text-[10px] text-zinc-500 font-extrabold pb-1 border-b flex justify-between">
+                                  <span>📁 المستندات والملفات المخزنة بذاكرة القرص الصلب:</span>
+                                  <span>{savedFiles.length} ملفات مدرجة</span>
+                                </h5>
+
+                                <div className="grid grid-cols-2 gap-2.5 max-h-[160px] overflow-y-auto pr-1">
+                                  {savedFiles.map((file, i) => (
+                                    <div
+                                      key={i}
+                                      onDoubleClick={() => {
+                                        playSound('click');
+                                        if (file.type === 'word') {
+                                          setWordDocumentName(file.name.replace('.doc', ''));
+                                          setWordContentText(file.content);
+                                          setWinOpenApp('word');
+                                          setWinMinimized(false);
+                                        } else {
+                                          setNotepadText(file.content);
+                                          setSavedNotepads(file.name);
+                                          setWinOpenApp('notepad');
+                                          setWinMinimized(false);
+                                        }
+                                      }}
+                                      onClick={() => {
+                                        playSound('click');
+                                      }}
+                                      className="border border-slate-200/80 p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 transition cursor-pointer flex items-center gap-2 select-none group text-right"
+                                      title="انقر نقراً مزدوجاً لفتح واسترجاع المخرجات!"
+                                    >
+                                      <div className="bg-amber-100 p-1.5 rounded-lg group-hover:scale-105 duration-100 shrink-0">
+                                        {file.type === 'word' ? (
+                                          <FileText className="w-5 h-5 text-emerald-600" />
+                                        ) : (
+                                          <FileText className="w-5 h-5 text-blue-600" />
+                                        )}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <span className="text-[10px] text-slate-800 font-black block truncate leading-tight">{file.name}</span>
+                                        <span className="text-[8px] text-slate-400 block font-bold leading-none mt-0.5">{file.type === 'word' ? 'مستند Word' : 'مفكرة نصية'}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className="p-2 bg-amber-50 border border-amber-200 text-[9px] text-amber-850 rounded-xl leading-relaxed flex gap-1 items-start">
+                                  <span className="text-xs">💡</span>
+                                  <span><span className="font-black">مهارة تكنولوجية:</span> انقر مرتين (Double Click) على أي ملف بالعلبة أعلاه لاستيراده فوراً وإعادة تحريره لتعديل الدرس بنظام التشغيل الرسومي الرائع!</span>
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+
+                    {/* Taskbar bottom panel with active minimized apps restore indicators */}
+                    <div className="w-full bg-slate-900/85 backdrop-blur border-t border-white/20 p-2 rounded-2xl flex justify-between items-center text-white text-[11px] font-black shrink-0 relative mt-auto z-10">
+                      <div className="flex items-center gap-2" dir="ltr">
+                        <span className="text-slate-405 font-mono text-[9.5px]"> Sudan SHIELD (١١:٣٠ م) </span>
+                        <span className="text-cyan-400 flex items-center gap-1 text-[9px]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                          <span>متصل 🟢</span>
                         </span>
                       </div>
                       
+                      {/* Active open window taskbar indicator tabs to restore minimized apps */}
+                      {winOpenApp !== 'none' && (
+                        <div className="flex gap-2 justify-center max-w-[150px] overflow-hidden truncate px-1">
+                          <button
+                            onClick={() => { playSound('click'); setWinMinimized(!winMinimized); }}
+                            className={`px-2 py-0.5 rounded text-[8.5px] font-bold border transition ${
+                              winMinimized 
+                                ? 'bg-indigo-900/30 border-rose-500/50 text-indigo-300 animate-pulse' 
+                                : 'bg-[#1e1b4b]/80 border-indigo-400 text-cyan-300'
+                            }`}
+                            title="اضغط لاستعادة النافذة الكامنة"
+                          >
+                            <span>🔋 {winOpenApp === 'notepad' ? 'المفكرة' : winOpenApp === 'calculator' ? 'الحاسب' : winOpenApp === 'paint' ? 'الرسام' : winOpenApp === 'word' ? 'وورد' : winOpenApp === 'powerpoint' ? 'العرض' : winOpenApp === 'browser' ? 'المتصفح' : 'الملفات'}</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Apps quick launch shortcuts on taskbar */}
+                      <div className="flex gap-2.5 justify-center text-xs px-1">
+                        <span 
+                          onClick={() => { playSound('click'); setWinOpenApp('notepad'); setWinMinimized(false); }}
+                          className="cursor-pointer hover:bg-white/10 p-1 rounded" title="المفكرة السريعة"
+                        >
+                          📝
+                        </span>
+                        <span 
+                          onClick={() => { playSound('click'); setWinOpenApp('calculator'); setWinMinimized(false); }}
+                          className="cursor-pointer hover:bg-white/10 p-1 rounded" title="الحاسبة الرسومية"
+                        >
+                          🔢
+                        </span>
+                        <span 
+                          onClick={() => { playSound('click'); setWinOpenApp('paint'); setWinMinimized(false); }}
+                          className="cursor-pointer hover:bg-white/10 p-1 rounded" title="الرسام المتقن"
+                        >
+                          🎨
+                        </span>
+                        <span 
+                          onClick={() => { playSound('click'); setWinOpenApp('word'); setWinMinimized(false); }}
+                          className="cursor-pointer hover:bg-white/10 p-1 rounded" title="وورد المدرسي"
+                        >
+                          📄
+                        </span>
+                        <span 
+                          onClick={() => { playSound('click'); setWinOpenApp('files'); setWinMinimized(false); }}
+                          className="cursor-pointer hover:bg-white/10 p-1 rounded" title="مجلد المستندات والملفات"
+                        >
+                          📁
+                        </span>
+                      </div>
+
+                      {/* Windows start button */}
                       <button 
-                        onClick={() => { playSound('laser'); setWinOpenApp('none'); }}
-                        className="w-5 h-5 bg-rose-100 text-rose-700 font-bold hover:bg-rose-500 hover:text-white rounded-full flex items-center justify-center text-[10px]"
+                        onClick={() => { 
+                          playSound('success'); 
+                          alert('🇸🇩 مرحباً بك في واجهة ميكروسوفت ويندوز الرسومية للمنهج السوداني!\nلقد تم تصميم هذه البيئة الافتراضية كاملة لدعم ممارسات الصف السادس الأكاديمية:\n\n1. المفكرة وكتابة الأوراق.\n2. وورد وتخزين الملفات الدائمة.\n3. بوربوينت واستعراض الشرائح التفاعلية للأوراق الدراسية.\n4. متصفح الشبكات لطلب عناوين الـ IP الخاصة بالراوتر والسيرفرات.\n5. لوحة الرسام البكسلية لتنمية الحس الإبداعي للفنانين!');
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-500 rounded-lg px-2.5 py-1 text-white font-extrabold text-[9px] flex items-center gap-1 shadow cursor-pointer active:scale-95 shrink-0"
                       >
-                        ✕
+                        <span>قائمة البدء 🚀</span>
+                        <span>🇸🇩</span>
                       </button>
                     </div>
 
-                    {/* App Window Content body */}
-                    <div className="p-4 text-slate-800">
-                      
-                      {/* Sub-app 1: Notepad */}
-                      {winOpenApp === 'notepad' && (
-                        <div className="space-y-3 font-semibold">
-                          <textarea
-                            className="w-full bg-slate-50 border p-2.5 rounded-xl text-xs h-32 focus:ring-1 focus:ring-blue-500 focus:outline-none font-bold placeholder:text-slate-450"
-                            value={notepadText}
-                            onChange={(e) => setNotepadText(e.target.value)}
-                          />
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              onClick={handleSaveNotepad}
-                              className="bg-blue-600 text-white font-extrabold text-xs px-4 py-2 rounded-xl hover:bg-blue-500 transition shadow flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Save className="w-4 h-4" />
-                              <span>حفظ بالنواة الافتراضية 💾</span>
-                            </button>
-                          </div>
-                          
-                          {savedNotepads && (
-                            <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 rounded-xl leading-relaxed">
-                              📂 <span className="font-extrabold">المستند النشط المحفوظ:</span> "{savedNotepads}"
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Sub-app 2: Calculator */}
-                      {winOpenApp === 'calculator' && (
-                        <div className="max-w-[240px] mx-auto bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 font-semibold">
-                          
-                          {/* Formula and Screen */}
-                          <div className="bg-slate-900 text-white p-3.5 rounded-xl font-mono text-right text-base font-extrabold">
-                            <div className="text-[10px] text-slate-400 h-4 leading-none mb-1">{calcFormula}</div>
-                            <div>{calcDisplay}</div>
-                          </div>
-
-                          {/* Grid numbers */}
-                          <div className="grid grid-cols-4 gap-1.5 text-xs font-black font-sans">
-                            {['C', '←', '÷', '×', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '=', '0'].map((btn) => (
-                              <button
-                                key={btn}
-                                onClick={() => runCalcAction(btn)}
-                                className={`py-2 rounded-lg transition text-center text-xs active:scale-95 ${
-                                  btn === '=' ? 'bg-indigo-600 text-white hover:bg-indigo-500 col-span-2' :
-                                  ['C', '←', '÷', '×', '-', '+'].includes(btn) ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' :
-                                  'bg-white text-slate-800 border hover:bg-slate-100 shadow-sm'
-                                }`}
-                              >
-                                {btn}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Sub-app 3: Paint Grid (Pixel Paint) */}
-                      {winOpenApp === 'paint' && (
-                        <div className="space-y-4 text-center font-semibold text-xs text-slate-700">
-                          <p className="text-[10px] leading-relaxed block mb-1">
-                            🎨 اختر لوناً من المربعات التالية، ثم اضغط على خلايا الشبكة أدناه لتصميم أعمال بكسل فنية مذهلة!
-                          </p>
-                          
-                          {/* Color Palette selectors */}
-                          <div className="flex gap-2 justify-center items-center">
-                            {['#3b82f6', '#10b981', '#f43f5e', '#eab308', '#a855f7', '#0f172a'].map((col) => (
-                              <button
-                                key={col}
-                                onClick={() => { playSound('click'); setPaintSelectedColor(col); }}
-                                className={`w-6 h-6 rounded-full transition-all border-2 ${
-                                  paintSelectedColor === col ? 'border-slate-800 scale-125 shadow-md' : 'border-transparent'
-                                }`}
-                                style={{ backgroundColor: col }}
-                              />
-                            ))}
-                            
-                            <button
-                              onClick={() => {
-                                playSound('click');
-                                setPaintGrid(Array(12).fill(null).map(() => Array(12).fill('#ffffff')));
-                              }}
-                              className="bg-slate-100 hover:bg-slate-200 text-[10px] font-black border px-2.5 py-1 rounded-lg mr-2 text-rose-600 flex items-center gap-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>مسح اللوحة</span>
-                            </button>
-                          </div>
-
-                          {/* Grid drawing area */}
-                          <div className="border border-slate-300 p-2.5 rounded-2xl bg-slate-50 inline-block mx-auto max-w-[250px]">
-                            <div className="grid grid-cols-12 gap-0.5" style={{ width: '192px', height: '192px' }}>
-                              {paintGrid.map((row, rIdx) => 
-                                row.map((cellColor, cIdx) => (
-                                  <div
-                                    key={`${rIdx}-${cIdx}`}
-                                    onClick={() => {
-                                      playSound('success');
-                                      const newGrid = [...paintGrid];
-                                      newGrid[rIdx][cIdx] = paintSelectedColor;
-                                      setPaintGrid(newGrid);
-                                      onEmitPoints(1); // Give micro point for painting!
-                                    }}
-                                    className="w-4 h-4 border border-slate-100 hover:opacity-80 transition-all cursor-pointer"
-                                    style={{ backgroundColor: cellColor }}
-                                  />
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
                   </div>
                 )}
-
-                {/* Taskbar with Start icon and Clock */}
-                <div className="w-full bg-slate-900/80 backdrop-blur border-t border-white/20 p-2 rounded-2xl flex justify-between items-center text-white text-[11px] font-black shrink-0 relative mt-auto z-10">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400">١١:٣٠ م</span>
-                    <span className="text-emerald-400">● مجمع بالكامل</span>
-                  </div>
-                  
-                  {/* Apps launching shortcuts on taskbar */}
-                  <div className="flex gap-3 justify-center text-base">
-                    <span 
-                      onClick={() => { playSound('click'); setWinOpenApp('notepad'); }}
-                      className="cursor-pointer hover:bg-white/10 p-1.5 rounded"
-                    >
-                      📝
-                    </span>
-                    <span 
-                      onClick={() => { playSound('click'); setWinOpenApp('calculator'); }}
-                      className="cursor-pointer hover:bg-white/10 p-1.5 rounded"
-                    >
-                      🔢
-                    </span>
-                    <span 
-                      onClick={() => { playSound('click'); setWinOpenApp('paint'); }}
-                      className="cursor-pointer hover:bg-white/10 p-1.5 rounded"
-                    >
-                      🎨
-                    </span>
-                  </div>
-
-                  {/* Windows start button */}
-                  <button 
-                    onClick={() => { 
-                      playSound('success'); 
-                      alert('مرحبا بك في ويندوز! لقد صمم عثمان المنقوري هذا المعمل لتجربة عتاد الحاسب وتطبيقات الرسام والمفكرة والآلة الحاسبة بشكل وهمي كامل.');
-                    }}
-                    className="bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1 text-white font-extrabold text-[10px] flex items-center gap-1 shadow cursor-pointer active:scale-95"
-                  >
-                    <span>البدء (Start)</span>
-                    <span>🇸🇩</span>
-                  </button>
-                </div>
 
               </div>
             </div>

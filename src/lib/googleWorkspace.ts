@@ -14,8 +14,11 @@ provider.setCustomParameters({
 // Add the scopes required for our Google Workspace features
 const SCOPES = [
   'https://www.googleapis.com/auth/classroom.courses.readonly',
-  'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+  'https://www.googleapis.com/auth/classroom.courses',
+  'https://www.googleapis.com/auth/classroom.topics',
+  'https://www.googleapis.com/auth/classroom.courseworkmaterials',
   'https://www.googleapis.com/auth/classroom.coursework.students.readonly',
+  'https://www.googleapis.com/auth/classroom.coursework.students',
   'https://www.googleapis.com/auth/classroom.announcements',
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/drive.file',
@@ -275,3 +278,108 @@ export async function fetchGoogleFormBody(formId: string) {
   }
   return await res.json();
 }
+
+// ==========================================
+// 6. Classroom Creation APIs (Course, Topics, Materials, Assignment)
+// ==========================================
+
+export async function createClassroomCourse(courseData: {
+  name: string;
+  section: string;
+  descriptionHeading: string;
+  description: string;
+  room: string;
+  ownerId: string;
+  courseState: string;
+}) {
+  const token = getAccessToken();
+  if (!token) throw new Error('يرجى تسجيل الدخول أولاً.');
+
+  const res = await fetch('https://classroom.googleapis.com/v1/courses', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error?.message || 'فشل في إنشاء الفصل الدراسي في Google Classroom.');
+  }
+  return await res.json();
+}
+
+export async function createClassroomTopic(courseId: string, name: string) {
+  const token = getAccessToken();
+  if (!token) throw new Error('يرجى تسجيل الدخول أولاً.');
+
+  const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/topics`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error?.message || `فشل إنشاء الموضوع "${name}".`);
+  }
+  return await res.json();
+}
+
+export async function createClassroomMaterial(courseId: string, materialData: {
+  title: string;
+  description: string;
+  state: 'PUBLISHED' | 'DRAFT';
+  topicId?: string;
+}) {
+  const token = getAccessToken();
+  if (!token) throw new Error('يرجى تسجيل الدخول أولاً.');
+
+  const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWorkMaterials`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(materialData),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error?.message || `فشل إنشاء المادة التعليمية "${materialData.title}".`);
+  }
+  return await res.json();
+}
+
+export async function createClassroomCourseWork(courseId: string, courseWorkData: {
+  title: string;
+  description: string;
+  workType: 'ASSIGNMENT' | 'SHORT_ANSWER' | 'MULTIPLE_CHOICE';
+  state: 'PUBLISHED' | 'DRAFT';
+  maxPoints: number;
+  topicId?: string;
+}) {
+  const token = getAccessToken();
+  if (!token) throw new Error('يرجى تسجيل الدخول أولاً.');
+
+  const res = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(courseWorkData),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error?.message || `فشل إنشاء الواجب الدراسي "${courseWorkData.title}".`);
+  }
+  return await res.json();
+}
+

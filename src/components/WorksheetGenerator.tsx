@@ -853,8 +853,8 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
   
   // Custom headers state
   const [teacherName, setTeacherName] = useState<string>('عثمان المنقوري');
-  const [schoolName, setSchoolName] = useState<string>('مدرسة جيل العباقرة النموذجية');
-  const [phoneNumber, setPhoneNumber] = useState<string>('٠٩٠٤٤٤٥٢٨٢'); // custom Sudany number placeholder
+  const [schoolName, setSchoolName] = useState<string>('مدرسة   ');
+  const [phoneNumber, setPhoneNumber] = useState<string>(' '); // custom Sudany number placeholder
   
   // Watermark security states
   const [watermarkEnabled, setWatermarkEnabled] = useState<boolean>(true);

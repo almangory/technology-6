@@ -198,139 +198,141 @@ export default function App() {
       <div className="fixed inset-0 artistic-grid-bg opacity-10 pointer-events-none z-0"></div>
 
       {/* Dynamic Header */}
-      <header className="sticky top-0 bg-slate-950/80 backdrop-blur-md border-b-4 border-indigo-500 z-35 shadow-lg shrink-0 select-none relative">
-        <div className="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center gap-4">
-          
-          {/* Logo Brand */}
-          <div
-            onClick={() => setCurrentView('lobby')}
-            className="flex items-center gap-3 cursor-pointer active:scale-95 duration-100"
-          >
-            <div className="bg-cyan-400 text-slate-900 rounded-xl p-2.5 rotate-6 shadow-[0_0_15px_rgba(34,211,238,0.5)] flex items-center justify-center shrink-0">
-              <Laptop className="w-5 h-5 text-slate-900 font-black" />
-            </div>
-            <div className="text-right">
-              <h1 className="font-sans font-black text-white text-sm md:text-base tracking-tight leading-snug">
-                تكنولوجيا المعلومات والاتصالات
-              </h1>
-              <p className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-widest leading-none mt-0.5">بوابة المبدعين الصغار • الصف السادس</p>
-            </div>
-          </div>
-
-          {/* Nav Links */}
-          <nav className="hidden md:flex gap-2">
-            <button
-              onClick={() => setCurrentView('lobby')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'lobby' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'lobby'} type="float">
-                <Home className="w-4 h-4" />
-              </AnimatedIcon>
-              <span>الرئيسية اللوبي</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('map')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'map' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'map'} type="bounce">
-                <BookOpen className="w-4 h-4" />
-              </AnimatedIcon>
-              <span>خريطة الوحدات 🗺️</span>
-            </button>
-            <button
-              onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'exam' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'exam'} type="pulse">
-                <Trophy className="w-4 h-4" />
-              </AnimatedIcon>
-              <span>مركز الاختبارات 🥇</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('google')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'google' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'google'} type="float">
-                <Laptop className="w-4 h-4 text-cyan-400" />
-              </AnimatedIcon>
-              <span>أدوات غوغل ☁️</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('assembly_lab')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'assembly_lab' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'assembly_lab'} type="shake">
-                <Cpu className="w-4 h-4 text-cyan-400" />
-              </AnimatedIcon>
-              <span>معمل الحاسوب 💻</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('worksheets')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'worksheets' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'worksheets'} type="pulse">
-                <FileText className="w-4 h-4 text-indigo-400" />
-              </AnimatedIcon>
-              <span>أوراق العمل 📝</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('profile')}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
-                currentView === 'profile' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <AnimatedIcon active={currentView === 'profile'} type="shake">
-                <Award className="w-4 h-4" />
-              </AnimatedIcon>
-              <span>الملف والشهادة 🎓</span>
-            </button>
-          </nav>
-
-          {/* Navigation & Connection indicators */}
-          <div className="flex items-center gap-3">
-            {isOnline ? (
-              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <Wifi className="w-3.5 h-3.5" />
-                <span>جاهز للعمل دون اتصال 📶</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-[10px] font-black text-amber-400 animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                <WifiOff className="w-3.5 h-3.5" />
-                <span>أنت الآن تعمل بدون إنترنت 📴</span>
-              </div>
-            )}
-
-            {/* User scoreboard shortcut */}
+      {currentView !== 'assembly_lab' && (
+        <header className="sticky top-0 bg-slate-950/80 backdrop-blur-md border-b-4 border-indigo-500 z-35 shadow-lg shrink-0 select-none relative">
+          <div className="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center gap-4">
+            
+            {/* Logo Brand */}
             <div
-              onClick={() => setCurrentView('profile')}
-              className="bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 cursor-pointer select-none transition shadow-sm"
+              onClick={() => setCurrentView('lobby')}
+              className="flex items-center gap-3 cursor-pointer active:scale-95 duration-100"
             >
-              <div className="w-7 h-7 rounded-sm bg-cyan-400 text-slate-900 border flex items-center justify-center text-base shadow-inner shrink-0 font-bold">
-                {stats.avatar}
+              <div className="bg-cyan-400 text-slate-900 rounded-xl p-2.5 rotate-6 shadow-[0_0_15px_rgba(34,211,238,0.5)] flex items-center justify-center shrink-0">
+                <Laptop className="w-5 h-5 text-slate-900 font-black" />
               </div>
-              <div className="text-right font-sans">
-                <span className="block text-[8px] text-indigo-300 font-bold leading-none">مجموع النقاط</span>
-                <span className="text-xs font-black text-yellow-400 font-mono tracking-tight leading-none block mt-1">{stats.points} XP</span>
+              <div className="text-right">
+                <h1 className="font-sans font-black text-white text-sm md:text-base tracking-tight leading-snug">
+                  تكنولوجيا المعلومات والاتصالات
+                </h1>
+                <p className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-widest leading-none mt-0.5">بوابة المبدعين الصغار • الصف السادس</p>
               </div>
             </div>
-          </div>
 
-        </div>
-      </header>
+            {/* Nav Links */}
+            <nav className="hidden md:flex gap-2">
+              <button
+                onClick={() => setCurrentView('lobby')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'lobby' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'lobby'} type="float">
+                  <Home className="w-4 h-4" />
+                </AnimatedIcon>
+                <span>الرئيسية اللوبي</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('map')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'map' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'map'} type="bounce">
+                  <BookOpen className="w-4 h-4" />
+                </AnimatedIcon>
+                <span>خريطة الوحدات 🗺️</span>
+              </button>
+              <button
+                onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'exam' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'exam'} type="pulse">
+                  <Trophy className="w-4 h-4" />
+                </AnimatedIcon>
+                <span>مركز الاختبارات 🥇</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('google')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'google' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'google'} type="float">
+                  <Laptop className="w-4 h-4 text-cyan-400" />
+                </AnimatedIcon>
+                <span>أدوات غوغل ☁️</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('assembly_lab')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'assembly_lab' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'assembly_lab'} type="shake">
+                  <Cpu className="w-4 h-4 text-cyan-400" />
+                </AnimatedIcon>
+                <span>معمل الحاسوب 💻</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('worksheets')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'worksheets' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'worksheets'} type="pulse">
+                  <FileText className="w-4 h-4 text-indigo-400" />
+                </AnimatedIcon>
+                <span>أوراق العمل 📝</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('profile')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                  currentView === 'profile' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+                }`}
+              >
+                <AnimatedIcon active={currentView === 'profile'} type="shake">
+                  <Award className="w-4 h-4" />
+                </AnimatedIcon>
+                <span>الملف والشهادة 🎓</span>
+              </button>
+            </nav>
+
+            {/* Navigation & Connection indicators */}
+            <div className="flex items-center gap-3">
+              {isOnline ? (
+                <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <Wifi className="w-3.5 h-3.5" />
+                  <span>جاهز للعمل دون اتصال 📶</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-[10px] font-black text-amber-400 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  <WifiOff className="w-3.5 h-3.5" />
+                  <span>أنت الآن تعمل بدون إنترنت 📴</span>
+                </div>
+              )}
+
+              {/* User scoreboard shortcut */}
+              <div
+                onClick={() => setCurrentView('profile')}
+                className="bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 cursor-pointer select-none transition shadow-sm"
+              >
+                <div className="w-7 h-7 rounded-sm bg-cyan-400 text-slate-900 border flex items-center justify-center text-base shadow-inner shrink-0 font-bold">
+                  {stats.avatar}
+                </div>
+                <div className="text-right font-sans">
+                  <span className="block text-[8px] text-indigo-300 font-bold leading-none">مجموع النقاط</span>
+                  <span className="text-xs font-black text-yellow-400 font-mono tracking-tight leading-none block mt-1">{stats.points} XP</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </header>
+      )}
 
       {/* Main page content layout container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 pb-20 relative z-10">
@@ -495,71 +497,73 @@ export default function App() {
       </main>
 
       {/* Mobile Sticky Tab bar */}
-      <div className="md:hidden fixed bottom-3 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-indigo-500/30 rounded-2xl p-2 z-35 shadow-lg flex justify-around items-center select-none">
-        <button
-          onClick={() => setCurrentView('lobby')}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'lobby' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'lobby'} type="float">
-            <Home className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>الرئيسية</span>
-        </button>
-        <button
-          onClick={() => setCurrentView('map')}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'map' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'map'} type="bounce">
-            <BookOpen className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>الوحدات</span>
-        </button>
-        <button
-          onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'exam' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'exam'} type="pulse">
-            <Trophy className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>الاختبارات</span>
-        </button>
-        <button
-          onClick={() => setCurrentView('google')}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'google' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'google'} type="float">
-            <Laptop className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>جوجل ☁️</span>
-        </button>
-        <button
-          onClick={() => setCurrentView('assembly_lab')}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'assembly_lab' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'assembly_lab'} type="shake">
-            <Cpu className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>العتاد 🛠️</span>
-        </button>
-        <button
-          onClick={() => setCurrentView('worksheets')}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'worksheets' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'worksheets'} type="pulse">
-            <FileText className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>أوراق العمل 📝</span>
-        </button>
-        <button
-          onClick={() => setCurrentView('profile')}
-          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'profile' ? 'text-cyan-400' : 'text-indigo-300'}`}
-        >
-          <AnimatedIcon active={currentView === 'profile'} type="shake">
-            <Award className="w-5 h-5" />
-          </AnimatedIcon>
-          <span>شهادتي</span>
-        </button>
-      </div>
+      {currentView !== 'assembly_lab' && (
+        <div className="md:hidden fixed bottom-3 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-indigo-500/30 rounded-2xl p-2 z-35 shadow-lg flex justify-around items-center select-none">
+          <button
+            onClick={() => setCurrentView('lobby')}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'lobby' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'lobby'} type="float">
+              <Home className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>الرئيسية</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('map')}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'map' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'map'} type="bounce">
+              <BookOpen className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>الوحدات</span>
+          </button>
+          <button
+            onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'exam' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'exam'} type="pulse">
+              <Trophy className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>الاختبارات</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('google')}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'google' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'google'} type="float">
+              <Laptop className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>جوجل ☁️</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('assembly_lab')}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'assembly_lab' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'assembly_lab'} type="shake">
+              <Cpu className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>العتاد 🛠️</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('worksheets')}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'worksheets' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'worksheets'} type="pulse">
+              <FileText className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>أوراق العمل 📝</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('profile')}
+            className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'profile' ? 'text-cyan-400' : 'text-indigo-300'}`}
+          >
+            <AnimatedIcon active={currentView === 'profile'} type="shake">
+              <Award className="w-5 h-5" />
+            </AnimatedIcon>
+            <span>شهادتي</span>
+          </button>
+        </div>
+      )}
 
       {/* Interactive overlay labs popup for simulators */}
       {activeSimulator && activeLessonId && (
@@ -580,13 +584,15 @@ export default function App() {
       )}
 
       {/* Sudan Educational Credentials footer */}
-      <footer className="bg-slate-950 border-t-2 border-indigo-900 py-6 text-center text-[10px] md:text-xs text-indigo-300 select-none mt-auto relative z-10" dir="rtl">
-        <div className="max-w-7xl mx-auto px-4 space-y-1.5 font-semibold">
-          <p className="text-cyan-400 font-bold">بوابة تكنولوجيا المعلومات والاتصالات لمستقبل السودان الرقمي 🇸🇩 • طبعة المبدعين الصغار</p>
-          <p>تم تصميم الموقع بواسطة عثمان المنقوري</p>
-          <p className="text-[9px] opacity-75">الموقع متوافق بالكامل مع طبعة الكتاب المدرسي للصف السادس الابتدائي ٢٠٢٠ م</p>
-        </div>
-      </footer>
+      {currentView !== 'assembly_lab' && (
+        <footer className="bg-slate-950 border-t-2 border-indigo-900 py-6 text-center text-[10px] md:text-xs text-indigo-300 select-none mt-auto relative z-10" dir="rtl">
+          <div className="max-w-7xl mx-auto px-4 space-y-1.5 font-semibold">
+            <p className="text-cyan-400 font-bold">بوابة تكنولوجيا المعلومات والاتصالات لمستقبل السودان الرقمي 🇸🇩 • طبعة المبدعين الصغار</p>
+            <p>تم تصميم الموقع بواسطة عثمان المنقوري</p>
+            <p className="text-[9px] opacity-75">الموقع متوافق بالكامل مع طبعة الكتاب المدرسي للصف السادس الابتدائي ٢٠٢٠ م</p>
+          </div>
+        </footer>
+      )}
 
     </div>
   );
