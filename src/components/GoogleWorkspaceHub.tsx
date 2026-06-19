@@ -102,6 +102,9 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
   const [formBody, setFormBody] = useState<any | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Auth Error State helper
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   // --- Google Classroom Automated Curriculum Sync States ---
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncProgress, setSyncProgress] = useState<number>(0);
@@ -188,6 +191,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
   const handleLogin = async () => {
     playSound('click');
     setIsLoggingIn(true);
+    setLoginError(null);
     try {
       const result = await googleSignIn();
       if (result) {
@@ -197,9 +201,17 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
         playSound('success');
         onEmitPoints(30); // points for linking real workspace
       }
-    } catch (err) {
+    } catch (err: any) {
       playSound('fail');
       console.error(err);
+      const errMsg = err?.message || String(err);
+      if (errMsg.includes('auth/popup-closed-by-user') || errMsg.includes('closed-by-user')) {
+        setLoginError(
+          'تنبيه مهم: لقد تم غلق نافذة تسجيل الدخول المنبثقة مبكراً (popup-closed-by-user). يحدث هذا غالباً بسبب قيود متصفح الإنترنت أو بسبب تشغيل التطبيق داخل نافذة معاينة (iFrame) مغلقة جزئياً. لحل المشكلة فوراً والاستمتاع بكامل المزايا السحابية، يرجى فتح التطبيق في علامة تبويب جديدة كاملة بالضغط على زر "فتح في نافذة جديدة" (Open in New Tab) الموجود في الزاوية العلوية اليمنى من شاشتك، ثم حاول الضغط على زر الاتصال من هناك لتظهر لك نافذة Google لتسجيل الدخول.'
+        );
+      } else {
+        setLoginError(`فشل الاتصال: ${errMsg}. يرجى التحقق من الاتصال بالإنترنت والمحاولة مجدداً.`);
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -728,7 +740,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
       {!isAuthenticated ? (
         /* LOCKSCREEN PROMPT */
-        <div className="bg-slate-950/60 p-8 rounded-3xl border border-indigo-500/10 text-center space-y-4 py-12">
+        <div className="bg-slate-950/60 p-8 rounded-3xl border border-indigo-500/10 text-center space-y-5 py-12">
           <span className="text-5xl block animate-pulse">☁️</span>
           <h4 className="text-lg font-black text-white">مرحباً بك في لوحة المزامنة السحابية الذكية!</h4>
           <p className="text-xs text-indigo-300 font-semibold max-w-xl mx-auto leading-relaxed">
@@ -741,6 +753,27 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
           >
             {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>اشبك حسابك في Google الآن 🚀</span>}
           </button>
+
+          {loginError && (
+            <div className="max-w-2xl mx-auto bg-rose-950/40 border border-rose-500/35 p-5 rounded-2xl text-right animate-fade-in space-y-2 mt-4">
+              <div className="flex items-center gap-2 text-rose-300 font-black text-xs">
+                <span>⚠️ تنبيه أثناء الربط السحابي مع Google Workspace</span>
+              </div>
+              <p className="text-[11px] text-rose-200/90 font-medium leading-relaxed">
+                {loginError}
+              </p>
+              <div className="pt-2 flex justify-end">
+                <a
+                  href={window.location.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-rose-500 text-slate-950 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-rose-400 cursor-pointer text-center"
+                >
+                  فتح التطبيق في نافذة مستقلة جديدة 🔗
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* AUTHENTICATED WORKSPACE TAB CONTROL */
