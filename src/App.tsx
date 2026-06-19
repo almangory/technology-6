@@ -13,7 +13,9 @@ import { LessonDetail } from './components/LessonDetail';
 import { ExamCenter } from './components/ExamCenter';
 import { UserProfileCard } from './components/UserProfileCard';
 import { InteractiveTools } from './components/InteractiveTools';
-import { BookOpen, Trophy, Sparkles, Award, Star, ListCollapse, Home, ShieldAlert, Laptop, ChevronLeft } from 'lucide-react';
+import { GoogleWorkspaceHub } from './components/GoogleWorkspaceHub';
+import { ComputerAssemblyLab } from './components/ComputerAssemblyLab';
+import { BookOpen, Trophy, Sparkles, Award, Star, ListCollapse, Home, ShieldAlert, Laptop, ChevronLeft, Cpu } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'ict_sixth_grade_stats_v3';
 
@@ -31,7 +33,7 @@ const DEFAULT_STATS: UserStats = {
 
 export default function App() {
   // Navigation & Active items state
-  const [currentView, setCurrentView] = useState<'lobby' | 'map' | 'lesson' | 'exam' | 'profile'>('lobby');
+  const [currentView, setCurrentView] = useState<'lobby' | 'map' | 'lesson' | 'exam' | 'profile' | 'google' | 'assembly_lab'>('lobby');
   const [activeUnit, setActiveUnit] = useState<Unit | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeSimulator, setActiveSimulator] = useState<SimulatorType | null>(null);
@@ -218,13 +220,40 @@ export default function App() {
               <span>خريطة الوحدات 🗺️</span>
             </button>
             <button
+              onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
+              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                currentView === 'exam' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+              }`}
+            >
+              <Trophy className="w-4 h-4" />
+              <span>مركز الاختبارات 🥇</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('google')}
+              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                currentView === 'google' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+              }`}
+            >
+              <Laptop className="w-4 h-4 animate-pulse text-cyan-400" />
+              <span>أدوات غوغل ☁️</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('assembly_lab')}
+              className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
+                currentView === 'assembly_lab' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
+              }`}
+            >
+              <Cpu className="w-4 h-4 animate-pulse text-cyan-400" />
+              <span>معمل الحاسوب 💻</span>
+            </button>
+            <button
               onClick={() => setCurrentView('profile')}
               className={`px-4 py-2 rounded-2xl text-xs font-black transition flex items-center gap-1.5 ${
                 currentView === 'profile' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
               <Award className="w-4 h-4" />
-              <span>الملف والشهادة 🥇</span>
+              <span>الملف والشهادة 🎓</span>
             </button>
           </nav>
 
@@ -264,6 +293,7 @@ export default function App() {
                   setCurrentView('lesson');
                 }}
                 onOpenProfile={() => setCurrentView('profile')}
+                onOpenAssemblyLab={() => setCurrentView('assembly_lab')}
               />
             </motion.div>
           )}
@@ -314,9 +344,9 @@ export default function App() {
             </motion.div>
           )}
 
-          {currentView === 'exam' && activeUnit && (
+          {currentView === 'exam' && (
             <motion.div
-              key={`exam-${activeUnit.id}`}
+              key={activeUnit ? `exam-${activeUnit.id}` : 'exam-custom'}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
@@ -353,6 +383,39 @@ export default function App() {
               />
             </motion.div>
           )}
+
+          {currentView === 'google' && (
+            <motion.div
+              key="google"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <GoogleWorkspaceHub
+                stats={stats}
+                onEmitPoints={handleEmitPoints}
+                onEmitAchievement={handleEmitAchievement}
+              />
+            </motion.div>
+          )}
+
+          {currentView === 'assembly_lab' && (
+            <motion.div
+              key="assembly_lab"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <ComputerAssemblyLab
+                stats={stats}
+                onEmitPoints={handleEmitPoints}
+                onEmitAchievement={handleEmitAchievement}
+                onClose={() => setCurrentView('lobby')}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -371,6 +434,27 @@ export default function App() {
         >
           <BookOpen className="w-5 h-5" />
           <span>الوحدات</span>
+        </button>
+        <button
+          onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
+          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'exam' ? 'text-cyan-400' : 'text-indigo-300'}`}
+        >
+          <Trophy className="w-5 h-5" />
+          <span>الاختبارات</span>
+        </button>
+        <button
+          onClick={() => setCurrentView('google')}
+          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'google' ? 'text-cyan-400' : 'text-indigo-300'}`}
+        >
+          <Laptop className="w-5 h-5" />
+          <span>جوجل ☁️</span>
+        </button>
+        <button
+          onClick={() => setCurrentView('assembly_lab')}
+          className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'assembly_lab' ? 'text-cyan-400' : 'text-indigo-300'}`}
+        >
+          <Cpu className="w-5 h-5" />
+          <span>العتاد 🛠️</span>
         </button>
         <button
           onClick={() => setCurrentView('profile')}

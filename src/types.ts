@@ -26,6 +26,7 @@ export interface Unit {
 export interface Question {
   id: string;
   unitId: string;
+  lessonId?: string;
   type: 'theoretical' | 'practical';
   text: string;
   options?: string[]; // for theoretical multiple choice

@@ -7,13 +7,15 @@ interface MainLobbyProps {
   stats: UserStats;
   onSelectUnit: (unit: Unit) => void;
   onOpenProfile: () => void;
+  onOpenAssemblyLab?: () => void;
 }
 
 export const MainLobby: React.FC<MainLobbyProps> = ({
   units,
   stats,
   onSelectUnit,
-  onOpenProfile
+  onOpenProfile,
+  onOpenAssemblyLab
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -61,6 +63,27 @@ export const MainLobby: React.FC<MainLobbyProps> = ({
           </button>
         </div>
       </div>
+
+      {/* High-Impact Virtual Lab Banner */}
+      {onOpenAssemblyLab && (
+        <div className="bg-gradient-to-r from-indigo-950 to-slate-900 border-2 border-indigo-500 rounded-[30px] p-6 text-white relative overflow-hidden shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 animate-fadeIn">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-400/10 rounded-full blur-2xl"></div>
+          <div className="space-y-1.5 text-right relative z-10">
+            <span className="bg-indigo-905 text-cyan-400 border border-indigo-505/30 text-[9px] px-2.5 py-0.5 rounded-full font-black">جدید: معمل الحواسیب التفاعلي 🚀</span>
+            <h3 className="font-extrabold text-white text-base md:text-lg">مختبر تجميع العتاد وأنظمة دوز، ويندوز ولينكس الوهمية 💻</h3>
+            <p className="text-[11px] text-indigo-200 leading-relaxed font-bold">
+              قم بتركيب المعالج والرام والقرص الصلب ومروحة التبريد ومزود الطاقة يدوياً على لوحة الأم، وشغّل نظامك الوهمي المفضل بدقة متناهية!
+            </p>
+          </div>
+          <button
+            onClick={onOpenAssemblyLab}
+            className="w-full md:w-auto bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black text-xs py-3.5 px-6 rounded-2xl shadow transition transform hover:scale-103 shrink-0 flex items-center justify-center gap-1 cursor-pointer relative z-10"
+          >
+            <span>ابدأ تركيب حاسوبك العملي الآن! 🛠️</span>
+            <ChevronLeft className="w-4 h-4 text-white" />
+          </button>
+        </div>
+      )}
 
       {/* Interactive Search Tool */}
       <div className="bg-slate-900 border-2 border-indigo-500/30 hover:border-indigo-500/60 rounded-2xl p-4 shadow-md flex items-center gap-3 transition duration-150">
