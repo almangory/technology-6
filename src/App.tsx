@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Unit, Lesson, UserStats, SimulatorType } from './types';
 import { UNITS_DATA, QUIZ_QUESTIONS, ACHIEVEMENTS_DATA } from './data';
 import { MainLobby } from './components/MainLobby';
+import { AnimatedIcon } from './components/AnimatedIcon';
 import { UnitMap } from './components/UnitMap';
 import { LessonDetail } from './components/LessonDetail';
 import { ExamCenter } from './components/ExamCenter';
@@ -16,7 +17,7 @@ import { InteractiveTools } from './components/InteractiveTools';
 import { GoogleWorkspaceHub } from './components/GoogleWorkspaceHub';
 import { ComputerAssemblyLab } from './components/ComputerAssemblyLab';
 import { WorksheetGenerator } from './components/WorksheetGenerator';
-import { BookOpen, Trophy, Sparkles, Award, Star, ListCollapse, Home, ShieldAlert, Laptop, ChevronLeft, Cpu, FileText } from 'lucide-react';
+import { BookOpen, Trophy, Sparkles, Award, Star, ListCollapse, Home, ShieldAlert, Laptop, ChevronLeft, Cpu, FileText, Wifi, WifiOff } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'ict_sixth_grade_stats_v3';
 
@@ -38,6 +39,22 @@ export default function App() {
   const [activeUnit, setActiveUnit] = useState<Unit | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeSimulator, setActiveSimulator] = useState<SimulatorType | null>(null);
+
+  // Offline support tracking state
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // User Stats loaded from storage with safe fallbacks
   const [stats, setStats] = useState<UserStats>(DEFAULT_STATS);
@@ -208,7 +225,9 @@ export default function App() {
                 currentView === 'lobby' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <Home className="w-4 h-4" />
+              <AnimatedIcon active={currentView === 'lobby'} type="float">
+                <Home className="w-4 h-4" />
+              </AnimatedIcon>
               <span>الرئيسية اللوبي</span>
             </button>
             <button
@@ -217,7 +236,9 @@ export default function App() {
                 currentView === 'map' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <BookOpen className="w-4 h-4" />
+              <AnimatedIcon active={currentView === 'map'} type="bounce">
+                <BookOpen className="w-4 h-4" />
+              </AnimatedIcon>
               <span>خريطة الوحدات 🗺️</span>
             </button>
             <button
@@ -226,7 +247,9 @@ export default function App() {
                 currentView === 'exam' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <Trophy className="w-4 h-4" />
+              <AnimatedIcon active={currentView === 'exam'} type="pulse">
+                <Trophy className="w-4 h-4" />
+              </AnimatedIcon>
               <span>مركز الاختبارات 🥇</span>
             </button>
             <button
@@ -235,7 +258,9 @@ export default function App() {
                 currentView === 'google' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <Laptop className="w-4 h-4 animate-pulse text-cyan-400" />
+              <AnimatedIcon active={currentView === 'google'} type="float">
+                <Laptop className="w-4 h-4 text-cyan-400" />
+              </AnimatedIcon>
               <span>أدوات غوغل ☁️</span>
             </button>
             <button
@@ -244,7 +269,9 @@ export default function App() {
                 currentView === 'assembly_lab' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <Cpu className="w-4 h-4 animate-pulse text-cyan-400" />
+              <AnimatedIcon active={currentView === 'assembly_lab'} type="shake">
+                <Cpu className="w-4 h-4 text-cyan-400" />
+              </AnimatedIcon>
               <span>معمل الحاسوب 💻</span>
             </button>
             <button
@@ -253,7 +280,9 @@ export default function App() {
                 currentView === 'worksheets' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <FileText className="w-4 h-4 animate-pulse text-indigo-400" />
+              <AnimatedIcon active={currentView === 'worksheets'} type="pulse">
+                <FileText className="w-4 h-4 text-indigo-400" />
+              </AnimatedIcon>
               <span>أوراق العمل 📝</span>
             </button>
             <button
@@ -262,22 +291,41 @@ export default function App() {
                 currentView === 'profile' ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.4)]' : 'text-indigo-200 hover:bg-slate-900 hover:text-white'
               }`}
             >
-              <Award className="w-4 h-4" />
+              <AnimatedIcon active={currentView === 'profile'} type="shake">
+                <Award className="w-4 h-4" />
+              </AnimatedIcon>
               <span>الملف والشهادة 🎓</span>
             </button>
           </nav>
 
-          {/* User scoreboard shortcut */}
-          <div
-            onClick={() => setCurrentView('profile')}
-            className="bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 cursor-pointer select-none transition shadow-sm"
-          >
-            <div className="w-7 h-7 rounded-sm bg-cyan-400 text-slate-900 border flex items-center justify-center text-base shadow-inner shrink-0 font-bold">
-              {stats.avatar}
-            </div>
-            <div className="text-right font-sans">
-              <span className="block text-[8px] text-indigo-300 font-bold leading-none">مجموع النقاط</span>
-              <span className="text-xs font-black text-yellow-400 font-mono tracking-tight leading-none block mt-1">{stats.points} XP</span>
+          {/* Navigation & Connection indicators */}
+          <div className="flex items-center gap-3">
+            {isOnline ? (
+              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <Wifi className="w-3.5 h-3.5" />
+                <span>جاهز للعمل دون اتصال 📶</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-[10px] font-black text-amber-400 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                <WifiOff className="w-3.5 h-3.5" />
+                <span>أنت الآن تعمل بدون إنترنت 📴</span>
+              </div>
+            )}
+
+            {/* User scoreboard shortcut */}
+            <div
+              onClick={() => setCurrentView('profile')}
+              className="bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 cursor-pointer select-none transition shadow-sm"
+            >
+              <div className="w-7 h-7 rounded-sm bg-cyan-400 text-slate-900 border flex items-center justify-center text-base shadow-inner shrink-0 font-bold">
+                {stats.avatar}
+              </div>
+              <div className="text-right font-sans">
+                <span className="block text-[8px] text-indigo-300 font-bold leading-none">مجموع النقاط</span>
+                <span className="text-xs font-black text-yellow-400 font-mono tracking-tight leading-none block mt-1">{stats.points} XP</span>
+              </div>
             </div>
           </div>
 
@@ -452,49 +500,63 @@ export default function App() {
           onClick={() => setCurrentView('lobby')}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'lobby' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <Home className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'lobby'} type="float">
+            <Home className="w-5 h-5" />
+          </AnimatedIcon>
           <span>الرئيسية</span>
         </button>
         <button
           onClick={() => setCurrentView('map')}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'map' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <BookOpen className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'map'} type="bounce">
+            <BookOpen className="w-5 h-5" />
+          </AnimatedIcon>
           <span>الوحدات</span>
         </button>
         <button
           onClick={() => { setActiveUnit(null); setCurrentView('exam'); }}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'exam' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <Trophy className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'exam'} type="pulse">
+            <Trophy className="w-5 h-5" />
+          </AnimatedIcon>
           <span>الاختبارات</span>
         </button>
         <button
           onClick={() => setCurrentView('google')}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'google' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <Laptop className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'google'} type="float">
+            <Laptop className="w-5 h-5" />
+          </AnimatedIcon>
           <span>جوجل ☁️</span>
         </button>
         <button
           onClick={() => setCurrentView('assembly_lab')}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'assembly_lab' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <Cpu className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'assembly_lab'} type="shake">
+            <Cpu className="w-5 h-5" />
+          </AnimatedIcon>
           <span>العتاد 🛠️</span>
         </button>
         <button
           onClick={() => setCurrentView('worksheets')}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'worksheets' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <FileText className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'worksheets'} type="pulse">
+            <FileText className="w-5 h-5" />
+          </AnimatedIcon>
           <span>أوراق العمل 📝</span>
         </button>
         <button
           onClick={() => setCurrentView('profile')}
           className={`flex flex-col items-center p-1 font-bold text-[9px] gap-1 ${currentView === 'profile' ? 'text-cyan-400' : 'text-indigo-300'}`}
         >
-          <Award className="w-5 h-5" />
+          <AnimatedIcon active={currentView === 'profile'} type="shake">
+            <Award className="w-5 h-5" />
+          </AnimatedIcon>
           <span>شهادتي</span>
         </button>
       </div>

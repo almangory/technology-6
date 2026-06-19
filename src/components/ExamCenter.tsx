@@ -118,7 +118,34 @@ export const ExamCenter: React.FC<ExamCenterProps> = ({
       return;
     }
 
-    setActiveQuestions(selectedBatch);
+    // Randomize/shuffle options inside each question so that the correct answer is never in a fixed index (like the second option)
+    const randomizedQuestions = selectedBatch.map((q) => {
+      // Guard for practical tasks or questions without valid options list
+      if (q.type !== 'theoretical' || !q.options || q.correctOption === undefined) {
+        return q;
+      }
+
+      // Track correct answer text
+      const correctAnswerText = q.options[q.correctOption];
+
+      // Shuffle the list of options
+      const optionsWithIndices = q.options.map((opt, i) => ({ text: opt, originalIndex: i }));
+      for (let i = optionsWithIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [optionsWithIndices[i], optionsWithIndices[j]] = [optionsWithIndices[j], optionsWithIndices[i]];
+      }
+
+      // Re-map the new correct index
+      const newCorrectIndex = optionsWithIndices.findIndex(o => o.text === correctAnswerText);
+
+      return {
+        ...q,
+        options: optionsWithIndices.map(o => o.text),
+        correctOption: newCorrectIndex !== -1 ? newCorrectIndex : q.correctOption,
+      };
+    });
+
+    setActiveQuestions(randomizedQuestions);
     setCurrentQIdx(0);
     setSelectedOpt(null);
     setShowExplanation(false);

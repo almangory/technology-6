@@ -270,7 +270,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
   onClose
 }) => {
   // Sound generator using Web Audio API
-  const playSound = (soundType: 'success' | 'click' | 'laser' | 'fail' | 'boot' | 'fan') => {
+  const playSound = (soundType: 'success' | 'click' | 'laser' | 'fail' | 'boot' | 'fan' | 'ram_click' | 'boot_success') => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -287,6 +287,54 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
         gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.4);
         osc.start();
         osc.stop(ctx.currentTime + 0.4);
+      } else if (soundType === 'ram_click') {
+        // Realistic plastic & metal latch lock double-click
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1100, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(280, ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.04);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.04);
+
+        // Second slightly lower latch click 40ms later
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(950, ctx.currentTime + 0.045);
+        osc2.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.085);
+        gain2.gain.setValueAtTime(0.10, ctx.currentTime + 0.045);
+        gain2.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.085);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(ctx.currentTime + 0.045);
+        osc2.stop(ctx.currentTime + 0.085);
+      } else if (soundType === 'boot_success') {
+        // Melodic and energetic electronic 16-bit upbeat major chord boot success sound
+        const notes = [
+          { freq: 440.00, time: 0 },      // A4
+          { freq: 554.37, time: 0.08 },   // C#5
+          { freq: 659.25, time: 0.16 },   // E5
+          { freq: 880.00, time: 0.24 },   // A5
+          { freq: 1109.73, time: 0.32 },  // C#6
+          { freq: 1318.51, time: 0.40 }   // E6
+        ];
+        
+        notes.forEach((note) => {
+          const nOsc = ctx.createOscillator();
+          const nGain = ctx.createGain();
+          nOsc.type = 'sine';
+          nOsc.frequency.setValueAtTime(note.freq, ctx.currentTime + note.time);
+          
+          nGain.gain.setValueAtTime(0.06, ctx.currentTime + note.time);
+          nGain.gain.exponentialRampToValueAtTime(0.002, ctx.currentTime + note.time + 0.3);
+          
+          nOsc.connect(nGain);
+          nGain.connect(ctx.destination);
+          
+          nOsc.start(ctx.currentTime + note.time);
+          nOsc.stop(ctx.currentTime + note.time + 0.3);
+        });
       } else if (soundType === 'fail') {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(220, ctx.currentTime);
@@ -451,7 +499,11 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
     const part = parts.find(p => p.id === partId);
     if (!part || part.placed) return;
 
-    playSound('success');
+    if (partId === 'ram') {
+      playSound('ram_click');
+    } else {
+      playSound('success');
+    }
     setParts(prev => prev.map(p => p.id === partId ? { ...p, placed: true } : p));
     setSelectedPartId(null);
     onEmitPoints(15);
@@ -489,7 +541,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
         if (next >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            playSound('success');
+            playSound('boot_success');
             setLabState('os_menu');
           }, 450);
           return 100;
@@ -1012,8 +1064,9 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                   <div className="w-full h-full bg-[radial-gradient(#818cf8_1.5px,transparent_1.5px)] [background-size:18px_18px]" />
                 </div>
 
-                {/* 2. MAIN MOTHERBOARD CONTAINER */}
-                <div className="relative flex-1 bg-slate-950/90 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between z-10 shadow-inner">
+                {/* 2. MAIN MOTHERBOARD CONTAINER WITH MOBILE HORIZONTAL PANNING */}
+                <div className="w-full overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
+                  <div className="relative min-w-[500px] lg:min-w-0 bg-slate-950/90 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between z-10 shadow-inner">
                   
                   {/* Interactive Slots overlay */}
                   <div className="relative w-full h-full min-h-[320px]">
@@ -1271,6 +1324,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                     </div>
                   )}
 
+                  </div>
                 </div>
 
                 {/* Micro capacitors details block at the bottom */}
@@ -1291,7 +1345,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                     انقر على المكون بالأسفل أو اسحبه برفق لتثبيته في اللوحة الأم:
                   </p>
                   
-                  <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 max-h-[340px] overflow-y-auto pr-1">
                     {parts.map((p) => (
                       <div
                         key={p.id}

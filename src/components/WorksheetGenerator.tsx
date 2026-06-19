@@ -863,6 +863,7 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
   const [passwordError, setPasswordError] = useState<string>('');
   const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
   const [showPasswordChar, setShowPasswordChar] = useState<boolean>(false);
+  const [showSandboxWarning, setShowSandboxWarning] = useState<boolean>(false);
   
   // Active generated worksheets
   const [generatedPages, setGeneratedPages] = useState<WorksheetPageContent[]>([]);
@@ -987,7 +988,16 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
   // Perform Native Print command
   const handlePrint = () => {
     playSound('success');
-    window.print();
+    try {
+      window.print();
+    } catch (e) {
+      console.warn('Native printing blocked by iframe sandbox limitations:', e);
+    }
+
+    // Show educational helper tips modal if the app is embedded inside an iframe
+    if (window.self !== window.top) {
+      setShowSandboxWarning(true);
+    }
   };
 
   return (
@@ -1342,7 +1352,7 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
                     
                     {/* First line: Sudan Grade banner */}
                     <div className="flex justify-between items-center text-[10px] font-bold border-b border-dashed border-slate-400 pb-1.5">
-                      <span>الشاعـر في تكنولوجيا المعلومات</span>
+                      <span>نقلة في تكنولوجيا المعلومات</span>
                       <span className="text-xs px-3 py-0.5 border border-black rounded-full font-black">تلاميذ الشهادة الابتدائية</span>
                       <span>جمهورية السودان • وزارة التربية</span>
                     </div>
@@ -1487,35 +1497,61 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
       </div>
 
       {/* Actual Raw Print Container (Optimized purely for printer output via CSS) */}
-      <div className="hidden print:block bg-white text-slate-900 min-h-screen">
+      <div className="worksheet-print-container bg-white text-slate-900 min-h-screen">
         
         {/* Native printable style injection */}
         <style dangerouslySetInnerHTML={{__html: `
+          @media screen {
+            .worksheet-print-container {
+              display: none !important;
+            }
+          }
           @media print {
-            body {
+            html, body {
               background: #ffffff !important;
               color: #000000 !important;
               padding: 0 !important;
               margin: 0 !important;
+              height: auto !important;
+              min-height: auto !important;
+              overflow: visible !important;
+            }
+            /* Hide the root app elements, sidebars, header, mobile navbar, decorative background grids, and buttons */
+            header, nav, footer, button, .print\\:hidden, #root > div > header, .md\\:hidden, .artistic-grid-bg, .no-print {
+              display: none !important;
             }
             #worksheet-lab-container {
               padding: 0 !important;
               margin: 0 !important;
               background: none !important;
+              min-height: auto !important;
+              box-shadow: none !important;
+              border: none !important;
             }
-            .print\\:hidden {
+            /* Hide all interactive components in worksheet generator during printing */
+            #worksheet-lab-container > :not(.worksheet-print-container) {
               display: none !important;
             }
-            .hidden.print\\:block {
-              display: block !important;
+            main {
+              padding: 0 !important;
+              margin: 0 !important;
+              max-width: none !important;
+              background: transparent !important;
             }
-            /* A4 layout adjustments */
+            .worksheet-print-container {
+              display: block !important;
+              opacity: 1 !important;
+              visibility: visible !important;
+              background: #ffffff !important;
+            }
+            /* A4 sheet styling */
             .printable-page {
               width: 210mm !important;
               height: 297mm !important;
               padding: 15mm !important;
-              margin: 0 !important;
+              margin: 0 auto !important;
               page-break-after: always !important;
+              page-break-inside: avoid !important;
               position: relative !important;
               box-sizing: border-box !important;
               display: flex !important;
@@ -1523,6 +1559,7 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
               justify-content: space-between !important;
               background: #ffffff !important;
               border: none !important;
+              color: #000000 !important;
             }
           }
         `}} />
@@ -1758,6 +1795,53 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
                 </button>
               </div>
 
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Sandbox Print Warning overlay Dialog */}
+      <AnimatePresence>
+        {showSandboxWarning && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4"
+              dir="rtl"
+            >
+              <div className="text-center space-y-2">
+                <div className="bg-emerald-500/10 text-emerald-400 p-3 rounded-full inline-block">
+                  <Printer className="w-8 h-8 animate-pulse" />
+                </div>
+                <h3 className="text-lg font-black text-white">إرشادات طباعة أوراق العمل 📝</h3>
+                <p className="text-xs text-indigo-300 leading-relaxed pr-3 pl-3">
+                  لقد أطلقنا أمر الطباعة الخاص بالمتصفح بنجاح! إذا لم يظهر لك مربع الحوار، يرجى اتباع التعليمات التالية:
+                </p>
+              </div>
+
+              <div className="bg-slate-950/60 p-4 rounded-2xl border border-indigo-500/10 space-y-3 font-sans text-xs text-indigo-300 text-right leading-relaxed">
+                <div className="flex items-start gap-2">
+                  <span className="bg-indigo-500/20 text-indigo-300 w-5 h-5 rounded-full flex items-center justify-center font-bold shrink-0">١</span>
+                  <p>إذا كنت تتصفح داخل <strong>إطار المعاينة الصغير (iframe)</strong>، يرجى النقر على زر <strong>"الفتح في نافذة مستقلة ↗"</strong> أعلى يمين الشاشة لتفعيل الطباعة المباشرة.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="bg-indigo-500/20 text-indigo-300 w-5 h-5 rounded-full flex items-center justify-center font-bold shrink-0">٢</span>
+                  <p>يمكنك أيضاً استخدام اختصار لوحة المفاتيح الرئيسي <strong>(Ctrl + P)</strong> أو <strong>(Cmd + P)</strong> لفتح نافذة طباعة أوراق العمل مباشرة في أي وقت.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="bg-indigo-500/20 text-indigo-300 w-5 h-5 rounded-full flex items-center justify-center font-bold shrink-0">٣</span>
+                  <p>تأكد من تفعيل خيار <strong>"رسومات الخلفية" (Background Graphics)</strong> في إعدادات الطباعة للحصول على الألوان والخطوط الرائعة.</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowSandboxWarning(false)}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 px-4 rounded-xl text-xs cursor-pointer shadow-md duration-75 block text-center"
+              >
+                حسناً، فهمت الطريقة
+              </button>
             </motion.div>
           </div>
         )}
