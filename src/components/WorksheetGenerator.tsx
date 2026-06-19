@@ -1285,13 +1285,7 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
                     </ul>
                   </div>
 
-                  <div className="p-3.5 bg-yellow-950/20 rounded-2xl border border-yellow-500/15 flex items-start gap-2.5">
-                    <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <span className="block text-[11px] font-black text-yellow-400">💡 رمز المرور للمنشآت المعتمدة:</span>
-                      <p className="text-[10px] text-indigo-300 leading-normal">إذا كنت ترغب بطباعة أوراق العمل مخصصة باسم مدرستك بدون علامة مائية للمطور، استخدم رمز الحماية <strong className="text-yellow-400 font-mono tracking-wider ml-1">20302060</strong> عند الإزالة.</p>
-                    </div>
-                  </div>
+
                 </div>
               </div>
 

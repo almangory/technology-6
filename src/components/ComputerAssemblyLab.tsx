@@ -1073,7 +1073,13 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                     
                     {/* F. PSU Socket / Slot (Top-Left) */}
                     <div 
-                      onClick={() => { playSound('click'); setSelectedPartId('psu'); }}
+                      onClick={() => { 
+                        playSound('click'); 
+                        setSelectedPartId('psu'); 
+                        if (!parts.find(p => p.id === 'psu')?.placed) {
+                          handleInstallPart('psu');
+                        }
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (draggingPartId === 'psu') setHoveredMotherboardSlot('psu');
@@ -1088,7 +1094,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         parts.find(p => p.id === 'psu')?.placed
                           ? 'bg-slate-900/90 border-emerald-500'
                           : selectedPartId === 'psu'
-                          ? 'bg-indigo-650/40 border-cyan-400 animate-pulse'
+                          ? 'bg-indigo-650/40 border-cyan-400 animate-pulse ring-2 ring-yellow-400'
                           : hoveredMotherboardSlot === 'psu'
                           ? 'bg-indigo-500/30 border-cyan-300'
                           : 'bg-slate-950 border-dashed border-indigo-500/15 text-indigo-300/30 hover:border-indigo-400'
@@ -1100,9 +1106,10 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         </div>
                       ) : (
                         <div className="text-center p-1.5 flex flex-col items-center justify-center">
-                          <Power className="w-7 h-7 text-indigo-500/45 mb-1.5 animate-pulse" />
+                          <Power className="w-7 h-7 text-indigo-500/45 mb-1 animate-pulse" />
                           <span className="text-[8px] font-bold block text-indigo-200">مشغل الطاقة</span>
                           <span className="text-[7px] text-cyan-400/60 font-bold block font-mono">ATX_POWER_PSU</span>
+                          <span className="bg-yellow-400/20 text-yellow-300 text-[6.5px] px-1 py-0.5 rounded font-black mt-1">اضغط للتثبيت 🔌</span>
                         </div>
                       )}
                     </div>
@@ -1130,13 +1137,25 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                       <div 
                         onClick={() => {
                           playSound('click');
-                          setSelectedPartId(parts.find(p => p.id === 'cpu')?.placed ? 'fan' : 'cpu');
+                          const isCpuPlaced = parts.find(p => p.id === 'cpu')?.placed;
+                          if (!isCpuPlaced) {
+                            handleInstallPart('cpu');
+                            setSelectedPartId('cpu');
+                          } else {
+                            const isFanPlaced = parts.find(p => p.id === 'fan')?.placed;
+                            if (!isFanPlaced) {
+                              handleInstallPart('fan');
+                              setSelectedPartId('fan');
+                            } else {
+                              setSelectedPartId('cpu');
+                            }
+                          }
                         }}
                         className={`w-28 h-28 rounded-2xl border-2 flex flex-col items-center justify-center p-1.5 cursor-pointer transition ${
                           parts.find(p => p.id === 'cpu')?.placed 
-                            ? 'bg-slate-900 border-indigo-505/40' 
+                            ? 'bg-slate-900 border-indigo-500/40' 
                             : selectedPartId === 'cpu'
-                            ? 'bg-indigo-650/30 border-cyan-400 animate-pulse animate-cyber-pulse'
+                            ? 'bg-indigo-650/30 border-cyan-400 animate-pulse ring-2 ring-yellow-400'
                             : hoveredMotherboardSlot === 'cpu'
                             ? 'bg-indigo-500/40 border-cyan-300'
                             : 'bg-slate-950 border-dashed border-indigo-500/15 text-indigo-300/30 hover:border-indigo-400'
@@ -1156,10 +1175,11 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             )}
                           </div>
                         ) : (
-                          <div className="text-center p-1">
-                            <Cpu className="w-7 h-7 mx-auto text-indigo-500/30 mb-1" />
+                          <div className="text-center p-1 flex flex-col items-center justify-center">
+                            <Cpu className="w-6 h-6 mx-auto text-indigo-500/30 mb-0.5" />
                             <span className="text-[8px] font-bold block">مقبس المعالج</span>
-                            <span className="text-[7px] text-cyan-400 font-bold block">CPU_SOCKET</span>
+                            <span className="text-[7px] text-cyan-400 font-bold block font-mono">CPU_SOCKET</span>
+                            <span className="bg-yellow-400/20 text-yellow-300 text-[6.5px] px-1 py-0.5 rounded font-black mt-1">اضغط للتركيب 🧠</span>
                           </div>
                         )}
                       </div>
@@ -1167,10 +1187,12 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                       {/* Fan highlight tag if CPU logic is complete but Fan is not */}
                       {parts.find(p => p.id === 'cpu')?.placed && !parts.find(p => p.id === 'fan')?.placed && (
                         <div 
-                          onClick={() => { playSound('click'); setSelectedPartId('fan'); }}
-                          className={`absolute -bottom-1.5 bg-yellow-400 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full cursor-pointer animate-bounce ${
-                            selectedPartId === 'fan' ? 'bg-cyan-400 ring-2 ring-indigo-500' : ''
-                          }`}
+                          onClick={() => { 
+                            playSound('click'); 
+                            setSelectedPartId('fan'); 
+                            handleInstallPart('fan');
+                          }}
+                          className={`absolute -bottom-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full cursor-pointer animate-bounce ring-2 ring-indigo-500 z-20`}
                         >
                           ركّب المروحة هنا 🌀
                         </div>
@@ -1179,7 +1201,13 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                     {/* C. Vertical RAM Slots Array (Right-Center) */}
                     <div 
-                      onClick={() => { playSound('click'); setSelectedPartId('ram'); }}
+                      onClick={() => { 
+                        playSound('click'); 
+                        setSelectedPartId('ram'); 
+                        if (!parts.find(p => p.id === 'ram')?.placed) {
+                          handleInstallPart('ram');
+                        }
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (draggingPartId === 'ram') setHoveredMotherboardSlot('ram');
@@ -1200,29 +1228,30 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           <div 
                             key={slotNum}
                             className={`w-3.5 h-full rounded border flex flex-col justify-between py-1 transition ${
-                              isPlaced && slotNum === 2
+                              isPlaced
                                 ? 'bg-indigo-950 border-emerald-500'
                                 : isChosen
-                                ? 'border-cyan-400 animate-pulse bg-cyan-400/5'
+                                ? 'border-cyan-400 animate-pulse bg-cyan-400/5 ring-1 ring-yellow-400'
                                 : hoveredMotherboardSlot === 'ram'
                                 ? 'border-cyan-300 bg-indigo-500/20'
                                 : 'bg-slate-950 border-zinc-800'
                             }`}
                           >
                             {/* Latches */}
-                            <div className={`w-full h-1 bg-slate-700 ${isPlaced && slotNum === 2 ? 'bg-emerald-500' : ''}`}></div>
+                            <div className={`w-full h-1 bg-slate-700 ${isPlaced ? 'bg-emerald-500' : ''}`}></div>
                             
-                            {isPlaced && slotNum === 2 ? (
+                            {isPlaced ? (
                               <div className="flex-1 w-full bg-emerald-950 flex flex-col justify-center items-center overflow-hidden">
                                 <span className="text-[6px] font-mono font-bold text-emerald-400 rotate-90 whitespace-nowrap">RAM DDR5</span>
                               </div>
                             ) : (
-                              <div className="flex-1 w-full flex justify-center items-center">
-                                <div className="w-0.5 h-4/5 bg-zinc-900 border-dashed border-zinc-800"></div>
+                              <div className="flex-1 w-full flex flex-col justify-center items-center">
+                                <div className="w-0.5 h-3/5 bg-zinc-900 border-dashed border-zinc-800"></div>
+                                <span className="text-[6px] text-yellow-400 font-black block leading-none select-none my-1 animate-pulse">اضغط</span>
                               </div>
                             )}
 
-                            <div className={`w-full h-1 bg-slate-700 ${isPlaced && slotNum === 2 ? 'bg-emerald-500' : ''}`}></div>
+                            <div className={`w-full h-1 bg-slate-700 ${isPlaced ? 'bg-emerald-500' : ''}`}></div>
                           </div>
                         );
                       })}
@@ -1231,7 +1260,13 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                     {/* D. M.2 SSD Horizontal Socket (Middle) */}
                     <div 
-                      onClick={() => { playSound('click'); setSelectedPartId('storage'); }}
+                      onClick={() => { 
+                        playSound('click'); 
+                        setSelectedPartId('storage'); 
+                        if (!parts.find(p => p.id === 'storage')?.placed) {
+                          handleInstallPart('storage');
+                        }
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (draggingPartId === 'storage') setHoveredMotherboardSlot('storage');
@@ -1246,7 +1281,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         parts.find(p => p.id === 'storage')?.placed
                           ? 'bg-slate-900/80 border-emerald-500'
                           : selectedPartId === 'storage'
-                          ? 'bg-indigo-650/35 border-cyan-400 animate-pulse'
+                          ? 'bg-indigo-650/35 border-cyan-400 animate-pulse ring-2 ring-yellow-400'
                           : hoveredMotherboardSlot === 'storage'
                           ? 'bg-indigo-500/30 border-cyan-300'
                           : 'bg-slate-950 border-dashed border-indigo-500/10 hover:border-indigo-400'
@@ -1259,6 +1294,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                       ) : (
                         <div className="w-full h-full flex justify-between items-center text-[8px] px-2 text-indigo-400/40 font-bold">
                           <span>M.2 SSD شق</span>
+                          <span className="bg-yellow-400/20 text-yellow-300 text-[6.5px] px-1 py-0.5 rounded font-black">اضغط للتركيب 💾</span>
                           <span>M2_CONNECTOR</span>
                         </div>
                       )}
@@ -1266,7 +1302,13 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
 
                     {/* E. PCIe x16 GPU Horizontal Channel (Lower half) */}
                     <div 
-                      onClick={() => { playSound('click'); setSelectedPartId('gpu'); }}
+                      onClick={() => { 
+                        playSound('click'); 
+                        setSelectedPartId('gpu'); 
+                        if (!parts.find(p => p.id === 'gpu')?.placed) {
+                          handleInstallPart('gpu');
+                        }
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (draggingPartId === 'gpu') setHoveredMotherboardSlot('gpu');
@@ -1281,7 +1323,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                         parts.find(p => p.id === 'gpu')?.placed
                           ? 'border-emerald-500 bg-slate-950/20'
                           : selectedPartId === 'gpu'
-                          ? 'bg-indigo-650/40 border-cyan-400 animate-pulse shadow-md shadow-cyan-400/20'
+                          ? 'bg-indigo-650/40 border-cyan-400 animate-pulse ring-2 ring-yellow-400 shadow-md shadow-cyan-400/20'
                           : hoveredMotherboardSlot === 'gpu'
                           ? 'bg-indigo-500/30 border-cyan-300'
                           : 'bg-slate-950 border-dashed border-indigo-500/10 hover:border-indigo-400'
@@ -1292,9 +1334,9 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           {renderRealisticPartSVG('gpu', true, isAssemblyComplete)}
                         </div>
                       ) : (
-                        <div className="w-full text-center p-1.5 text-indigo-400/30 font-bold">
+                        <div className="w-full text-center p-1.5 text-indigo-400/30 font-bold flex flex-col items-center justify-center">
                           <span className="text-[8px] block">شق بطاقة الرسوميات السريع GPU PCIe 4.0</span>
-                          <span className="text-[7px] font-mono block text-indigo-400/20">PCIEX16_GPU_SLOT</span>
+                          <span className="bg-yellow-400/20 text-yellow-300 text-[6.5px] px-1.5 py-0.5 rounded font-black mt-1">اضغط للتثبيت المباشر 🎮</span>
                         </div>
                       )}
                     </div>
@@ -1360,16 +1402,16 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           playSound('click');
                           setSelectedPartId(p.id);
                         }}
-                        className={`p-3.5 rounded-2xl border transition duration-150 transform active:scale-98 flex items-center justify-between gap-3 cursor-pointer ${
+                        className={`p-3 rounded-2xl border transition duration-150 transform active:scale-98 flex items-center justify-between gap-2.5 cursor-pointer ${
                           p.placed 
-                            ? 'bg-slate-955 border-indigo-900/30 text-indigo-400/60 opacity-55' 
+                            ? 'bg-slate-950 border-indigo-900/30 text-indigo-400/60 opacity-55' 
                             : selectedPartId === p.id 
                             ? 'bg-indigo-650/30 text-white border-cyan-400 ring-1 ring-cyan-400'
                             : 'bg-slate-900/70 hover:bg-slate-800 border-indigo-500/10 text-slate-200'
                         }`}
                       >
                         {/* Real-life vector thumbnail preview */}
-                        <div className="w-11 h-11 bg-slate-950 p-1.5 rounded-xl border border-indigo-500/10 shrink-0">
+                        <div className="w-10 h-10 bg-slate-950 p-1.5 rounded-xl border border-indigo-500/10 shrink-0">
                           {renderRealisticPartSVG(p.id)}
                         </div>
 
@@ -1378,7 +1420,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                           <h5 className="font-extrabold text-[11px] truncate text-slate-100 flex items-center gap-1.5">
                             <span>{p.name}</span>
                             {p.placed ? (
-                              <span className="text-emerald-400 font-bold shrink-0 text-[10px]">✓</span>
+                              <span className="text-emerald-400 font-extrabold shrink-0 text-[10px]">✓</span>
                             ) : (
                               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
                             )}
@@ -1387,14 +1429,28 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
                             {p.placed ? 'تم التركيب بنجاح' : 'متاح للسحب والتركيب'}
                           </span>
                         </div>
+
+                        {/* Mobile and instant Touch-to-install button */}
+                        {!p.placed && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playSound('click');
+                              handleInstallPart(p.id);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[9px] px-2 py-1.5 rounded-lg border border-emerald-500 transition hover:scale-105 shadow-md shadow-emerald-500/15 cursor-pointer shrink-0"
+                          >
+                            تركيب مباشر ⚡
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-indigo-950/40 p-3 rounded-2xl text-[9px] text-zinc-300 border border-indigo-500/10 leading-relaxed font-bold flex gap-1.5 items-center font-bold">
-                  <span className="text-base">🖐️</span>
-                  <span>تستطيع سحب القطع مباشرة وإسقاطها داخل الدوائر ومسارات اللوحة الأم!</span>
+                <div className="bg-indigo-950/40 p-3 rounded-2xl text-[9px] text-cyan-300 border border-indigo-500/10 leading-relaxed font-bold flex gap-1.5 items-center">
+                  <span className="text-base">💡</span>
+                  <span>سهولة للجوال: يمكنك تثبيت أي قطعة مباشرة بضغط زر "تركيب مباشر ⚡" أو بالنقر على مكانها في اللوحة الأم دون حاجة لسحب وإفلات!</span>
                 </div>
               </div>
 
