@@ -21,6 +21,7 @@ import {
   Phone
 } from 'lucide-react';
 import { UNITS_DATA } from '../data';
+import { generateDynamicWorksheets, PoolDiagramQuestion } from './WorksheetQuestionsPool';
 
 // Definition of Worksheet Page content data structure
 interface WorksheetPageContent {
@@ -51,6 +52,7 @@ interface WorksheetPageContent {
     term: string;
     dottedLines: number;
   }[];
+  diagram?: PoolDiagramQuestion;
 }
 
 // Fixed 15 High-Fidelity ICT Educational Printable Worksheet Pages matching curriculum perfectly
@@ -837,6 +839,240 @@ const SPECIFIC_15_PAGES: WorksheetPageContent[] = [
   }
 ];
 
+function renderDiagramSvg(imageType: 'networks' | 'server' | 'cloud' | 'firewall' | 'ppt') {
+  switch (imageType) {
+    case 'networks':
+      return (
+        <svg viewBox="0 0 200 150" className="w-full h-full block" dir="ltr">
+          {/* Switch central node */}
+          <rect x="85" y="60" width="30" height="20" rx="4" fill="#6366f1" stroke="#312e81" strokeWidth="1.5" />
+          <text x="100" y="72" fill="#ffffff" fontSize="7" fontWeight="bold" textAnchor="middle">SWITCH</text>
+          
+          {/* Node 1: Server (Top Left) */}
+          <rect x="25" y="15" width="35" height="22" rx="3" fill="#f8fafc" stroke="#334155" strokeWidth="1.5" />
+          <rect x="25" y="37" width="35" height="4" fill="#475569" />
+          <circle cx="31" cy="39" r="0.8" fill="#22c55e" />
+          <circle cx="37" cy="39" r="0.8" fill="#eab308" />
+          {/* Connected Line */}
+          <line x1="45" y1="37" x2="85" y2="65" stroke="#94a3b8" strokeDasharray="2" strokeWidth="1.5" />
+          
+          {/* Node 2: Printer (Top Right) */}
+          <rect x="140" y="15" width="35" height="18" rx="2" fill="#f8fafc" stroke="#334155" strokeWidth="1.5" />
+          <rect x="143" y="33" width="29" height="8" fill="#cbd5e1" stroke="#334155" strokeWidth="1.2" />
+          {/* Connected Line */}
+          <line x1="140" y1="33" x2="115" y2="65" stroke="#94a3b8" strokeDasharray="2" strokeWidth="1.5" />
+          
+          {/* Node 3: Client PC (Bottom Left) */}
+          <rect x="25" y="105" width="32" height="18" rx="2" fill="#f8fafc" stroke="#334155" strokeWidth="1.5" />
+          <line x1="41" y1="123" x2="41" y2="132" stroke="#334155" strokeWidth="2" />
+          <line x1="33" y1="132" x2="49" y2="132" stroke="#334155" strokeWidth="2" />
+          {/* Connected Line */}
+          <line x1="45" y1="105" x2="85" y2="78" stroke="#94a3b8" strokeDasharray="2" strokeWidth="1.5" />
+          
+          {/* Node 4: Router/Mux (Bottom Right) */}
+          <circle cx="160" cy="115" r="14" fill="#e0f2fe" stroke="#0369a1" strokeWidth="1.5" />
+          <path d="M 152,115 L 168,115 M 160,107 L 160,123" stroke="#0284c7" strokeWidth="2" />
+          {/* Connected Line */}
+          <line x1="145" y1="110" x2="115" y2="78" stroke="#94a3b8" strokeDasharray="2" strokeWidth="1.5" />
+
+          {/* Badges/Numbers */}
+          {/* Badge 1 (Server) */}
+          <circle cx="25" cy="15" r="7" fill="#ef4444" />
+          <text x="25" y="17.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">1</text>
+          
+          {/* Badge 2 (Printer) */}
+          <circle cx="175" cy="15" r="7" fill="#f97316" />
+          <text x="175" y="17.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">2</text>
+          
+          {/* Badge 3 (Client) */}
+          <circle cx="25" cy="105" r="7" fill="#3b82f6" />
+          <text x="25" y="107.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">3</text>
+          
+          {/* Badge 4 (Switch) */}
+          <circle cx="100" cy="53" r="7" fill="#22c55e" />
+          <text x="100" y="55.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">4</text>
+        </svg>
+      );
+    case 'server':
+      return (
+        <svg viewBox="0 0 200 150" className="w-full h-full block" dir="ltr">
+          {/* Case Background */}
+          <rect x="15" y="10" width="170" height="130" rx="6" fill="#1e293b" stroke="#475569" strokeWidth="2" />
+          
+          {/* Motherboard area */}
+          <rect x="25" y="20" width="115" height="110" rx="4" fill="#064e3b" stroke="#047857" strokeWidth="2" />
+          
+          {/* UPS / Battery Backup (Right side) */}
+          <rect x="148" y="25" width="28" height="100" rx="3" fill="#334155" stroke="#94a3b8" strokeWidth="1.2" />
+          <rect x="153" y="32" width="18" height="12" fill="#ef4444" rx="1" />
+          <rect x="153" y="48" width="18" height="12" fill="#22c55e" rx="1" />
+          <rect x="153" y="64" width="18" height="12" fill="#eab308" rx="1" />
+          <text x="162" y="105" fill="#94a3b8" fontSize="7" fontWeight="bold" textAnchor="middle">UPS</text>
+          
+          {/* Component 1: CPU and Cooler */}
+          <rect x="35" y="30" width="35" height="35" rx="3" fill="#cbd5e1" stroke="#334155" strokeWidth="1.2" />
+          <circle cx="52.5" cy="47.5" r="12" fill="#64748b" stroke="#334155" strokeWidth="1.2" />
+          <line x1="35" y1="47.5" x2="70" y2="47.5" stroke="#475569" />
+          <line x1="52.5" y1="30" x2="52.5" y2="65" stroke="#475569" />
+          
+          {/* Component 2: RAM slot */}
+          <rect x="92" y="30" width="6" height="60" rx="1" fill="#111827" />
+          <rect x="104" y="30" width="6" height="60" rx="1" fill="#111827" />
+          <line x1="95" y1="25" x2="95" y2="95" stroke="#10b981" strokeWidth="1.5" />
+          <line x1="107" y1="25" x2="107" y2="95" stroke="#10b981" strokeWidth="1.5" />
+          
+          {/* Component 3: Hard Disk / SSD Storage */}
+          <rect x="35" y="90" width="45" height="30" rx="2" fill="#475569" stroke="#94a3b8" strokeWidth="1.2" />
+          <line x1="40" y1="95" x2="75" y2="95" stroke="#94a3b8" />
+          <text x="57.5" y="110" fill="#cbd5e1" fontSize="7" fontWeight="bold" textAnchor="middle">SSD/HDD</text>
+          
+          {/* Badges pointing to targets */}
+          {/* Badge 1 (CPU) */}
+          <circle cx="52.5" cy="47.5" r="7" fill="#ef4444" />
+          <text x="52.5" y="50" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">1</text>
+          
+          {/* Badge 2 (RAM) */}
+          <circle cx="98" cy="62" r="7" fill="#f97316" />
+          <text x="98" y="64.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">2</text>
+          
+          {/* Badge 3 (SSD/HDD) */}
+          <circle cx="57.5" cy="105" r="7" fill="#3b82f6" />
+          <text x="57.5" y="107.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">3</text>
+          
+          {/* Badge 4 (UPS) */}
+          <circle cx="162" cy="80" r="7" fill="#22c55e" />
+          <text x="162" y="82.5" fill="white" fontSize="8" fontWeight="black" textAnchor="middle">4</text>
+        </svg>
+      );
+    case 'cloud':
+      return (
+        <svg viewBox="0 0 200 150" className="w-full h-full block" dir="ltr">
+          {/* Outer cloud design background shape */}
+          <path d="M25 110 C15 110 5 100 5 90 C5 78 17 72 25 75 C30 55 50 40 70 40 C85 40 98 48 105 60 C115 50 135 50 145 60 C155 45 180 45 190 60 C198 70 198 85 190 95 C195 105 185 120 170 120 L25 120 Z" fill="#f0fdf4" stroke="#86efac" strokeWidth="1" opacity="0.4" />
+
+          {/* Stack Layers */}
+          {/* Layer 1: Apps */}
+          <g transform="translate(40, 20)">
+            <rect x="0" y="0" width="120" height="20" rx="4" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+            <text x="60" y="13" fill="#047857" fontSize="7" fontWeight="bold" textAnchor="middle">التطبيقات (Applications)</text>
+            <circle cx="10" cy="10" r="6" fill="#ef4444" />
+            <text x="10" y="12.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">1</text>
+          </g>
+          
+          {/* Layer 2: Platforms */}
+          <g transform="translate(40, 48)">
+            <rect x="0" y="0" width="120" height="20" rx="4" fill="#f0f9ff" stroke="#0ea5e9" strokeWidth="1.2" />
+            <text x="60" y="13" fill="#0369a1" fontSize="7" fontWeight="bold" textAnchor="middle">المنصات (Platforms)</text>
+            <circle cx="10" cy="10" r="6" fill="#f97316" />
+            <text x="10" y="12.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">2</text>
+          </g>
+          
+          {/* Layer 3: Infrastructure */}
+          <g transform="translate(40, 76)">
+            <rect x="0" y="0" width="120" height="20" rx="4" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.2" />
+            <text x="60" y="13" fill="#1d4ed8" fontSize="7" fontWeight="bold" textAnchor="middle">البنية التحتية (Infrastructure)</text>
+            <circle cx="10" cy="10" r="6" fill="#3b82f6" />
+            <text x="10" y="12.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">3</text>
+          </g>
+          
+          {/* Layer 4: Users */}
+          <g transform="translate(40, 104)">
+            <rect x="0" y="0" width="120" height="20" rx="4" fill="#faf5ff" stroke="#a855f7" strokeWidth="1.2" />
+            <text x="60" y="13" fill="#6b21a8" fontSize="7" fontWeight="bold" textAnchor="middle">المستفيدين (Users)</text>
+            <circle cx="10" cy="10" r="6" fill="#22c55e" />
+            <text x="10" y="12.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">4</text>
+          </g>
+        </svg>
+      );
+    case 'firewall':
+      return (
+        <svg viewBox="0 0 200 150" className="w-full h-full block" dir="ltr">
+          {/* Internet Zone (Left) */}
+          <rect x="10" y="20" width="60" height="110" rx="5" fill="#fff1f2" stroke="#fecdd3" strokeWidth="1" />
+          <text x="40" y="32" fill="#be123c" fontSize="7" fontWeight="black" textAnchor="middle">إنترنت عامة</text>
+          <circle cx="40" cy="75" r="14" fill="#fda4af" stroke="#e11d48" strokeWidth="1.2" />
+          <text x="40" y="78" fill="#be123c" fontSize="8" fontWeight="black" textAnchor="middle">HACKER</text>
+          <circle cx="20" cy="75" r="6" fill="#ef4444" />
+          <text x="20" y="77.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">1</text>
+
+          {/* Firewall Wall (Middle) */}
+          <g transform="translate(82, 15)">
+            <rect x="0" y="5" width="14" height="110" fill="#f97316" stroke="#c2410c" strokeWidth="1" rx="1" />
+            {/* Brick lines patterns */}
+            <line x1="0" y1="20" x2="14" y2="20" stroke="#7c2d12" />
+            <line x1="0" y1="40" x2="14" y2="40" stroke="#7c2d12" />
+            <line x1="0" y1="60" x2="14" y2="60" stroke="#7c2d12" />
+            <line x1="0" y1="80" x2="14" y2="80" stroke="#7c2d12" />
+            <line x1="0" y1="100" x2="14" y2="100" stroke="#7c2d12" />
+            <circle cx="7" cy="10" r="6" fill="#f97316" />
+            <text x="7" y="12.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">2</text>
+          </g>
+
+          {/* Secure Local Area Network Zone (Right) */}
+          <rect x="110" y="20" width="80" height="110" rx="5" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1" />
+          <text x="150" y="32" fill="#15803d" fontSize="7" fontWeight="black" textAnchor="middle">الشبكة المحمية</text>
+          <rect x="130" y="65" width="40" height="25" rx="3" fill="#cbd5e1" stroke="#334155" strokeWidth="1.2" />
+          <rect x="135" y="90" width="30" height="15" fill="#475569" />
+          <line x1="140" y1="108" x2="160" y2="108" stroke="#334155" strokeWidth="2.5" />
+          <circle cx="160" cy="50" r="6" fill="#3b82f6" />
+          <text x="160" y="52.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">3</text>
+          
+          {/* Data Packet Arrow trying to enter */}
+          <path d="M55,75 L82,75" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2" />
+          <path d="M78,71 L82,75 L78,79" fill="none" stroke="#ef4444" strokeWidth="1.5" />
+          
+          <path d="M96,75 L125,75" fill="none" stroke="#22c55e" strokeWidth="1.5" />
+          <path d="M121,71 L125,75 L121,79" fill="none" stroke="#22c55e" strokeWidth="1.5" />
+
+          <circle cx="106" cy="75" r="6" fill="#22c55e" />
+          <text x="106" y="77.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">4</text>
+        </svg>
+      );
+    case 'ppt':
+      return (
+        <svg viewBox="0 0 200 150" className="w-full h-full block" dir="ltr">
+          {/* PowerPoint window */}
+          <rect x="10" y="10" width="180" height="130" rx="4" fill="#fafafa" stroke="#da3715" strokeWidth="2" />
+          
+          {/* Top menu bar */}
+          <rect x="10" y="10" width="180" height="15" fill="#da3715" />
+          <text x="100" y="21" fill="#ffffff" fontSize="7" fontWeight="bold" textAnchor="middle">Microsoft PowerPoint</text>
+          
+          {/* Sub Ribbon bar */}
+          <rect x="10" y="25" width="180" height="18" fill="#eaeaea" stroke="#dcdcdc" strokeWidth="0.5" />
+          <text x="180" y="37" fill="#333333" fontSize="6" fontWeight="bold" textAnchor="end" className="pr-1">ملف      إدراج      عرض      انتقالات</text>
+          <circle cx="145" cy="34" r="6" fill="#ef4444" />
+          <text x="145" y="36.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">1</text>
+          
+          {/* Left slides pane */}
+          <rect x="15" y="48" width="35" height="85" fill="#f0f0f0" stroke="#d2d2d2" strokeWidth="1" />
+          <rect x="20" y="55" width="25" height="15" rx="1" fill="#ffffff" stroke="#c0c0c0" strokeWidth="0.5" />
+          <rect x="20" y="75" width="25" height="15" rx="1" fill="#ffffff" stroke="#c0c0c0" strokeWidth="0.5" />
+          <rect x="20" y="95" width="25" height="15" rx="1" fill="#ffffff" stroke="#c0c0c0" strokeWidth="0.5" />
+          <circle cx="32" cy="70" r="6" fill="#f97316" />
+          <text x="32" y="72.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">2</text>
+          
+          {/* Active slide area */}
+          <rect x="55" y="48" width="130" height="85" fill="#ffffff" stroke="#cccccc" strokeWidth="1.2" />
+          <rect x="75" y="65" width="90" height="20" rx="1" fill="none" stroke="#dcdcdc" strokeDasharray="1.5" />
+          <text x="120" y="77" fill="#b0b0b0" fontSize="6" textAnchor="middle">انقر لإضافة عنوان رئيسي</text>
+          
+          <rect x="85" y="90" width="70" height="25" rx="1" fill="none" stroke="#dcdcdc" strokeDasharray="1.5" />
+          <text x="120" y="104" fill="#b0b0b0" fontSize="6" textAnchor="middle">انقر لإضافة عنوان فرعي</text>
+          <circle cx="120" cy="80" r="6" fill="#3b82f6" />
+          <text x="120" y="82.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">3</text>
+          
+          {/* Bottom Bar Controls */}
+          <rect x="55" y="123" width="130" height="10" fill="#f5f5f5" />
+          <circle cx="175" cy="128" r="5" fill="#22c55e" />
+          <text x="175" y="130.5" fill="white" fontSize="7" fontWeight="black" textAnchor="middle">4</text>
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 interface WorksheetGeneratorProps {
   stats: any;
   onEmitPoints: (pts: number) => void;
@@ -915,35 +1151,13 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
   const handleGenerateWorksheets = () => {
     playSound('success');
     
-    // Pick from fixed lists or adapt based on selected options
-    let selectedBasePool: WorksheetPageContent[] = [...SPECIFIC_15_PAGES];
-
-    if (selectedTopicType === 'unit') {
-      // Filter pages matching the selected unit description or lessons
-      const unitNumber = selectedUnitId === 'unit1' ? 1 : selectedUnitId === 'unit2' ? 2 : selectedUnitId === 'unit3' ? 3 : selectedUnitId === 'unit4' ? 4 : 5;
-      selectedBasePool = SPECIFIC_15_PAGES.filter(p => p.unitTitle.includes(unitNumber === 1 ? 'الأولى' : unitNumber === 2 ? 'الثانية' : unitNumber === 3 ? 'الثالثة' : unitNumber === 4 ? 'الرابعة' : 'الخامسة'));
-    } else if (selectedTopicType === 'lesson') {
-      // Find pages closest to the lesson name
-      const lessonTitle = availableLessons.find(l => l.id === selectedLessonId)?.title || '';
-      selectedBasePool = SPECIFIC_15_PAGES.filter(p => p.title.includes(lessonTitle) || p.topicName.includes(lessonTitle));
-      // If none found directly, grab the unit's pages
-      if (selectedBasePool.length === 0) {
-        const unitNumber = selectedUnitId === 'unit1' ? 1 : selectedUnitId === 'unit2' ? 2 : selectedUnitId === 'unit3' ? 3 : selectedUnitId === 'unit4' ? 4 : 5;
-        selectedBasePool = SPECIFIC_15_PAGES.filter(p => p.unitTitle.includes(unitNumber === 1 ? 'الأولى' : unitNumber === 2 ? 'الثانية' : unitNumber === 3 ? 'الثالثة' : unitNumber === 4 ? 'الرابعة' : 'الخامسة'));
-      }
-    }
-
-    // Now stretch or slice to fit exactly "pageCount" pages
-    const resultPages: WorksheetPageContent[] = [];
-    for (let i = 0; i < pageCount; i++) {
-      // Round-robin selection if pool is smaller than pageCount requested
-      const poolIndex = i % selectedBasePool.length;
-      const basePage = selectedBasePool[poolIndex];
-      resultPages.push({
-        ...basePage,
-        pageNumber: i + 1 // override page number
-      });
-    }
+    // Dynamically build and shuffle worksheets with unique questions
+    const resultPages = generateDynamicWorksheets(
+      selectedTopicType,
+      selectedUnitId,
+      selectedLessonId,
+      pageCount
+    );
 
     setGeneratedPages(resultPages);
     setIsGenerated(true);
@@ -1470,6 +1684,36 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
                       </div>
                     </div>
 
+                    {/* Q6: Diagram Question (If available) */}
+                    {page.diagram && (
+                      <div className="space-y-3 border-t border-slate-200 pt-3">
+                        <span className="block font-black text-xs text-slate-950">سادساً / {page.diagram.instruction}</span>
+                        <div className="text-xs bg-slate-50/50 border border-slate-300 rounded-lg p-3 flex flex-col md:flex-row gap-4 items-center">
+                          {/* SVG drawing container */}
+                          <div className="w-full md:w-1/3 max-w-[200px] aspect-[4/3] bg-white rounded-md border border-slate-200 p-2 shrink-0 flex items-center justify-center shadow-sm">
+                            {renderDiagramSvg(page.diagram.imageType)}
+                          </div>
+                          
+                          {/* Identification list */}
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                            {page.diagram.labels.map((lbl) => (
+                              <div key={lbl.number} className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5 font-bold">
+                                  <span className="w-5 h-5 rounded-full bg-slate-900 border border-slate-950 text-white flex items-center justify-center text-[10px] font-black font-mono shrink-0">
+                                    {lbl.number}
+                                  </span>
+                                  <span className="text-slate-700 text-[11px]">{lbl.labelText}</span>
+                                </div>
+                                <div className="border-b border-dotted border-slate-450 h-5 w-full text-slate-400 text-[10px] flex items-end pb-0.5 select-none text-right">
+                                  ...........................................................
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
 
                   {/* Worksheet Footer (Sudan school theme) */}
@@ -1694,6 +1938,33 @@ export function WorksheetGenerator({ stats, onEmitPoints, onEmitAchievement, onC
                   ))}
                 </div>
               </div>
+
+              {/* Q6: Diagram (Print view) */}
+              {page.diagram && (
+                <div className="space-y-1.5 border-t border-slate-200 pt-2 shrink-0">
+                  <span className="block font-black text-[11px] text-slate-950">سادساً / {page.diagram.instruction}</span>
+                  <div className="text-[10px] bg-slate-50/20 border border-slate-300 rounded-lg p-2 flex gap-3 items-center">
+                    <div className="w-[140px] h-[105px] bg-white rounded border border-slate-200 p-1 shrink-0 flex items-center justify-center">
+                      {renderDiagramSvg(page.diagram.imageType)}
+                    </div>
+                    <div className="flex-1 grid grid-cols-2 gap-2 w-full">
+                      {page.diagram.labels.map((lbl) => (
+                        <div key={lbl.number} className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1 font-bold">
+                            <span className="w-4 h-4 rounded-full bg-slate-900 border border-slate-950 text-white flex items-center justify-center text-[9px] font-black font-mono shrink-0">
+                              {lbl.number}
+                            </span>
+                            <span className="text-slate-700 text-[10px] leading-none">{lbl.labelText}</span>
+                          </div>
+                          <div className="border-b border-dotted border-slate-450 h-4.5 w-full text-slate-400 text-[9px] flex items-end pb-0.5 select-none text-right font-mono">
+                            ................................................
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
 

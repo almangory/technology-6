@@ -1063,7 +1063,7 @@ export const ComputerAssemblyLab: React.FC<ComputerAssemblyLabProps> = ({
       
       <div 
         id="computer_assembly_lab_container"
-        className="bg-slate-900 rounded-[35px] w-full max-w-6xl h-full md:max-h-[88vh] flex flex-col overflow-hidden border-2 border-indigo-500 shadow-[0_0_35px_rgba(79,70,229,0.3)]"
+        className="bg-slate-900 rounded-[30px] w-full max-w-6xl h-auto lg:h-[88vh] flex flex-col lg:overflow-hidden border-2 border-indigo-500 shadow-[0_0_35px_rgba(79,70,229,0.3)]"
       >
         
         {/* Header Bar */}
